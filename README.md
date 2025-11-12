@@ -1,6 +1,6 @@
 # 🦋 LittleButterfly Compiler
 
-![GitHub top language](https://img.shields.io/github/languages/top/IL_TUO_USERNAME/IL_TUO_REPO?style=for-the-badge)
+![GitHub top language](https://img.shields.io/github/languages/top/GiuseppeGabardela/LittleButterlfy-Compiler?style=for-the-badge)
 ![GitHub topics](https://img.shields.io/badge/topic-compiler-blue?style=for-the-badge)
 ![GitHub topics](https://img.shields.io/badge/topic-university--project-green?style=for-the-badge)
 ![GitHub topics](https://img.shields.io/badge/topic-c--like-purple?style=for-the-badge)
@@ -60,3 +60,4 @@ int main() {
     }
     return 0;
 }
+```
