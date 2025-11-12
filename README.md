@@ -1,12 +1,5 @@
 # 🦋 LittleButterfly Compiler
 
-![GitHub top language](https://img.shields.io/github/languages/top/GiuseppeGabardela/LittleButterlfy-Compiler?style=for-the-badge)
-![GitHub topics](https://img.shields.io/badge/topic-compiler-blue?style=for-the-badge)
-![GitHub topics](https://img.shields.io/badge/topic-university--project-green?style=for-the-badge)
-![GitHub topics](https://img.shields.io/badge/topic-c--like-purple?style=for-the-badge)
-![GitHub topics](https://img.shields.io/badge/topic-custom--language-orange?style=for-the-badge)
-![GitHub topics](https://img.shields.io/badge/topic-parser-red?style=for-the-badge)
-
 A compiler for a custom, C-like language, built for the **Programming Language Engineering** university course.
 
 ---
