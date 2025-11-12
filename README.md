@@ -54,3 +54,18 @@ int main() {
     return 0;
 }
 ```
+
+```c
+// Note how user-defined names 'counter' and the string literal are unchanged.
+
+ifint mafaifin() {
+    ifint counter = 10; // 'ifint' is transformed, 'counter' is not
+
+    whifilefe (counter > 0) { // 'whifilefe' is transformed
+        prifintf("Count: %d\n", counter); // 'prifintf' is transformed, string is not
+        counter--;
+    }
+    
+    refetufurn 0; // 'refetufurn' is transformed
+}
+```
