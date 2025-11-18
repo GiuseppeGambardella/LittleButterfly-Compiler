@@ -1,39 +1,108 @@
 %{
 #include <iostream>
 #include <string>
-#include "tokens.h" // Includiamo i nostri token condivisi
+#include "tokens.h"
 
 using namespace std;
 %}
 
-/* Attiviamo la modalità C++ */
 %option c++
-/* Non vogliamo gestire più file di input in sequenza */
 %option noyywrap
 
 %%
 
-[0-9]+          {
-                  // Esempio: Riconosce "123"
-                  cout << "[LEXER] Letto numero: " << yytext << endl;
-                  return TOKEN_NUMERO;
-                }
+/***********************
+ *   PAROLE CHIAVE     *
+ ***********************/
+"ifif"              { return TOKEN_IF; }
+"efelsefe"          { return TOKEN_ELSE; }
+"thefen"            { return TOKEN_THEN; }
+"whifilefe"         { return TOKEN_LOOP; }
+"fly"               { return TOKEN_MAIN; }
+"ifint"             { return TOKEN_INT; }
+"refeafaefel"       { return TOKEN_DOUBLE; }
+"chafar"            { return TOKEN_CHAR; }
+"strifing"          { return TOKEN_STRING; }
+"notype"            { return TOKEN_VOID; }
+"bofoofol"          { return TOKEN_BOOL; }
 
+/***********************
+ *    BOOLEANI          *
+ ***********************/
+"true"              { return TOKEN_TRUE; }
+"false"             { return TOKEN_FALSE; }
+
+/*******************************
+ *   OPERATORI MULTI-CARATTERE *
+ *******************************/
+"=="                { return TOKEN_EQ; }
+"<>"                { return TOKEN_NEQ; }
+">="                { return TOKEN_GE; }
+"<="                { return TOKEN_LE; }
+"or"                { return TOKEN_OR; }
+"and"               { return TOKEN_AND; }
+
+/*******************************
+ *   OPERATORI SINGOLI         *
+ *******************************/
+[+\-*/=><!&]        { return yytext[0]; }
+
+/*******************************
+ *   COSTANTI NUMERICHE         *
+ *******************************/
+[0-9]+"."[0-9]+     {
+                        cout << "[LEXER] Double: " << yytext << endl;
+                        return TOKEN_CONST_DOUBLE;
+                    }
+
+[0-9]+              {
+                        cout << "[LEXER] Intero: " << yytext << endl;
+                        return TOKEN_CONST_INTEGER;
+                    }
+
+/*******************************
+ *   CARATTERI E STRINGHE       *
+ *******************************/
+\'([^\'\\]|\\.)\'   {
+                        cout << "[LEXER] Carattere: " << yytext << endl;
+                        return TOKEN_CONST_CHAR;
+                    }
+
+\"([^\"\\]|\\.)*\"  {
+                        cout << "[LEXER] Stringa: " << yytext << endl;
+                        return TOKEN_CONST_STRING;
+                    }
+
+/*******************************
+ *       IDENTIFICATORI         *
+ *******************************/
 [a-zA-Z_][a-zA-Z0-9_]* {
-                  // Esempio: Riconosce "variabile_1"
-                  cout << "[LEXER] Letto ID: " << yytext << endl;
-                  return TOKEN_IDENTIFICATORE;
-                }
+                        cout << "[LEXER] ID: " << yytext << endl;
+                        return TOKEN_ID;
+                      }
 
-"+"             { return TOKEN_PIU; }
-"-"             { return TOKEN_MENO; }
-"="             { return TOKEN_UGUALE; }
+/*******************************
+ *        PUNTEGGIATURA         *
+ *******************************/
+[(){};,]            { return yytext[0]; }
 
-[ \t\n\r]+      { /* Ignoriamo spazi, tab e invio */ }
+/*******************************
+ *           COMMENTI            *
+ *******************************/
+"@*"([^*]|\*+[^*@])*\*+"@"   { /* Ignora commenti */ }
 
-.               {
-                  cout << "[LEXER] Carattere illegale: " << yytext << endl;
-                  return TOKEN_SCONOSCIUTO;
-                }
+/*******************************
+ *      SPAZI E TAB             *
+ *******************************/
+[ \t\n\r]+          { /* ignora */ }
+
+/*******************************
+ *     CARATTERI ILLEGALI       *
+ *******************************/
+.                   {
+                        cout << "[LEXER] Carattere illegale: " << yytext << endl;
+                        return TOKEN_SCONOSCIUTO;
+                    }
 
 %%
+
