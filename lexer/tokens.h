@@ -3,42 +3,45 @@
 
 // Usiamo numeri positivi (0 è riservato per EOF - fine file)
 enum TokenType {
-    TOKEN_EOF = 0,
     //Token numerici/operzioni
-    TOKEN_NUMBER=1,
-    TOKEN_ID=2,
-    TOKEN_TRUE=25,
-    TOKEN_FALSE=26,
-    TOKEN_PLUS=3,
-    TOKEN_MINUS=4,
-    TOKEN_MUL=5,
-    TOKEN_DIV=6,
-    TOKEN_LPAREN=7,
-    TOKEN_RPAREN=8,
-    TOKEN_ASSIGN=15,
-    TOKEN_STRING_CONCAT=21,
-    TOKEN_POW=22,
-    TOKEN_AND=23,
-    TOKEN_OR=24,
+    TOKEN_CONST_INTEGER=258,
+    TOKEN_CONST_STRING=284,
+    TOKEN_CONST_CHAR=285,
+    TOKEN_CONST_DOUBLE=286,
+    TOKEN_ID=259,
+    TOKEN_TRUE=260,
+    TOKEN_FALSE=261,
+    TOKEN_AND=262,
+    TOKEN_OR=263,
 
     //Token parole chiave
-    TOKEN_IF=9,
-    TOKEN_THEN=10,
-    TOKEN_ELSE=11,
-    TOKEN_LOOP=13,
-    TOKEN_END=14,
-    TOKEN_MAIN=20,
+    TOKEN_IF=264,
+    TOKEN_THEN=265,
+    TOKEN_ELSE=266,
+    TOKEN_LOOP=267,
+    TOKEN_MAIN=269,
+    TOKEN_INT=268,
+    TOKEN_DOUBLE=274,
+    TOKEN_BOOL=275,
+    TOKEN_VOID=276,
+    TOKEN_CHAR=277,
+    TOKEN_STRING=278,
 
 
     //operatori relazionali
-    TOKEN_EQ=16,
-    TOKEN_NEQ=17,
-    TOKEN_MAX=18,
-    TOKEN_MIN=19,
+    TOKEN_EQ=280
+    TOKEN_NEQ=281,
+    TOKEN_LE=282,
+    TOKEN_GE=283,
 
-    //separatori
-    TOKEN_COMMA=27,
-    TO
+    //funzioni
+    TOKEN_FUNC=279,
+    TOKEN_PRINT=270,
+    TOKEN_SCAN=271,
+    TOKEN_RETURN=272,
+
+    //Token speciali
+    TOKEN_EOF =273,
 
 
 
