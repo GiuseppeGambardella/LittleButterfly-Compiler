@@ -11,9 +11,7 @@ using namespace std;
 
 %%
 
-/***********************
- *   PAROLE CHIAVE     *
- ***********************/
+ /* --- PAROLE CHIAVE --- */
 "ifif"              { return TOKEN_IF; }
 "efelsefe"          { return TOKEN_ELSE; }
 "thefen"            { return TOKEN_THEN; }
@@ -26,15 +24,11 @@ using namespace std;
 "notype"            { return TOKEN_VOID; }
 "bofoofol"          { return TOKEN_BOOL; }
 
-/***********************
- *    BOOLEANI          *
- ***********************/
+ /* --- BOOLEANI --- */
 "true"              { return TOKEN_TRUE; }
 "false"             { return TOKEN_FALSE; }
 
-/*******************************
- *   OPERATORI MULTI-CARATTERE *
- *******************************/
+ /* --- OPERATORI MULTI-CARATTERE --- */
 "=="                { return TOKEN_EQ; }
 "<>"                { return TOKEN_NEQ; }
 ">="                { return TOKEN_GE; }
@@ -42,14 +36,10 @@ using namespace std;
 "or"                { return TOKEN_OR; }
 "and"               { return TOKEN_AND; }
 
-/*******************************
- *   OPERATORI SINGOLI         *
- *******************************/
+ /* --- OPERATORI SINGOLI --- */
 [+\-*/=><!&]        { return yytext[0]; }
 
-/*******************************
- *   COSTANTI NUMERICHE         *
- *******************************/
+ /* --- COSTANTI NUMERICHE --- */
 [0-9]+"."[0-9]+     {
                         cout << "[LEXER] Double: " << yytext << endl;
                         return TOKEN_CONST_DOUBLE;
@@ -60,9 +50,7 @@ using namespace std;
                         return TOKEN_CONST_INTEGER;
                     }
 
-/*******************************
- *   CARATTERI E STRINGHE       *
- *******************************/
+ /* --- CARATTERI E STRINGHE --- */
 \'([^\'\\]|\\.)\'   {
                         cout << "[LEXER] Carattere: " << yytext << endl;
                         return TOKEN_CONST_CHAR;
@@ -73,36 +61,25 @@ using namespace std;
                         return TOKEN_CONST_STRING;
                     }
 
-/*******************************
- *       IDENTIFICATORI         *
- *******************************/
+ /* --- IDENTIFICATORI --- */
 [a-zA-Z_][a-zA-Z0-9_]* {
                         cout << "[LEXER] ID: " << yytext << endl;
                         return TOKEN_ID;
                       }
 
-/*******************************
- *        PUNTEGGIATURA         *
- *******************************/
+ /* --- PUNTEGGIATURA --- */
 [(){};,]            { return yytext[0]; }
 
-/*******************************
- *           COMMENTI            *
- *******************************/
+ /* --- COMMENTI (@* ... *@) --- */
 "@*"([^*]|\*+[^*@])*\*+"@"   { /* Ignora commenti */ }
 
-/*******************************
- *      SPAZI E TAB             *
- *******************************/
+ /* --- SPAZI E TAB --- */
 [ \t\n\r]+          { /* ignora */ }
 
-/*******************************
- *     CARATTERI ILLEGALI       *
- *******************************/
+ /* --- CARATTERI ILLEGALI --- */
 .                   {
                         cout << "[LEXER] Carattere illegale: " << yytext << endl;
                         return TOKEN_SCONOSCIUTO;
                     }
 
 %%
-

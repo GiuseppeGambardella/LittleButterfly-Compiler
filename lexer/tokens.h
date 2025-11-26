@@ -29,7 +29,7 @@ enum TokenType {
 
 
     //operatori relazionali
-    TOKEN_EQ=280
+    TOKEN_EQ=280,
     TOKEN_NEQ=281,
     TOKEN_LE=282,
     TOKEN_GE=283,
@@ -41,7 +41,8 @@ enum TokenType {
     TOKEN_RETURN=272,
 
     //Token speciali
-    TOKEN_EOF =273,
+    TOKEN_EOF=273,
+    TOKEN_SCONOSCIUTO=287
 
 
 
