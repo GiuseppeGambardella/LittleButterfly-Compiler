@@ -24,6 +24,7 @@ int main() {
     while ((token = lexer->yylex()) != TOKEN_EOF) {
 
         switch (token) {
+
             case TOKEN_NUMERO:
                 cout << "  -> Main: Ho ricevuto un NUMERO" << endl;
                 break;

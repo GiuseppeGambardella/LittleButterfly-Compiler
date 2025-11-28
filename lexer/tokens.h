@@ -19,7 +19,7 @@ enum TokenType {
     TOKEN_THEN=265,
     TOKEN_ELSE=266,
     TOKEN_LOOP=267,
-    TOKEN_MAIN=269,
+    TOKEN_MAIN=269, //deleted in favor of TOKEN_FUNC
     TOKEN_INT=268,
     TOKEN_DOUBLE=274,
     TOKEN_BOOL=275,
