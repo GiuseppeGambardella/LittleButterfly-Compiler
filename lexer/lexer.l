@@ -2,16 +2,18 @@
 #include <iostream>
 #include <string>
 //#include "tokens.h"
-#include<../parser/parser.hpp
+#include "../parser/parser.hpp"
 
 using namespace std;
 %}
 
 %option c++
 %option noyywrap
+%option yylineno
 
 %%
 
+"fly"                { return TOKEN_MAIN; }
 "defef"              { return TOKEN_FUNC; }
 "flyback"            { return TOKEN_RETURN; }
 "flyout"             { return TOKEN_PRINT; }
@@ -73,7 +75,7 @@ using namespace std;
                       }
 
  /* --- PUNTEGGIATURA --- */
-[(){};,]            { return yytext[0]; }
+[(){};,:]            { return yytext[0]; }
 
  /* --- COMMENTI (@* ... *@) --- */
 "@*"([^*]|\*+[^*@])*\*+"@"   { /* Ignora commenti */ }

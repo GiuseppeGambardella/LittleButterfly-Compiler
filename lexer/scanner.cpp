@@ -1,5 +1,6 @@
+#line 1 "lexer/scanner.cpp"
 
-#line 2 "lex.yy.cc"
+#line 3 "lexer/scanner.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -170,8 +171,27 @@ extern int yyleng;
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
     
-    #define YY_LESS_LINENO(n)
-    #define YY_LINENO_REWIND_TO(ptr)
+    /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
+     *       access to the local variable yy_act. Since yyless() is a macro, it would break
+     *       existing scanners that call yyless() from OUTSIDE yylex.
+     *       One obvious solution it to make yy_act a global. I tried that, and saw
+     *       a 5% performance hit in a non-yylineno scanner, because yy_act is
+     *       normally declared as a register variable-- so it is not worth it.
+     */
+    #define  YY_LESS_LINENO(n) \
+            do { \
+                int yyl;\
+                for ( yyl = n; yyl < yyleng; ++yyl )\
+                    if ( yytext[yyl] == '\n' )\
+                        --yylineno;\
+            }while(0)
+    #define YY_LINENO_REWIND_TO(dst) \
+            do {\
+                const char *p;\
+                for ( p = yy_cp-1; p >= (dst); --p)\
+                    if ( *p == '\n' )\
+                        --yylineno;\
+            }while(0)
     
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
@@ -302,7 +322,7 @@ typedef flex_uint8_t YY_CHAR;
 
 #include <FlexLexer.h>
 
-int yyFlexLexer::yywrap() { return 1; }
+inline int yyFlexLexer::yywrap() { return 1; }
 
 /* Done after the current pattern has been matched and before the
  * corresponding action - sets up yytext.
@@ -313,8 +333,8 @@ int yyFlexLexer::yywrap() { return 1; }
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 33
-#define YY_END_OF_BUFFER 34
+#define YY_NUM_RULES 34
+#define YY_END_OF_BUFFER 35
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -324,21 +344,21 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[134] =
     {   0,
-        0,    0,   34,   32,   31,   31,   23,   32,   32,   29,
-       25,   23,   23,   23,   32,   28,   28,   28,   28,   28,
-       28,   28,   28,   28,   28,   28,   28,   28,   28,   31,
-        0,   27,    0,    0,    0,    0,   25,   20,   18,   17,
-       19,    0,   28,   28,   28,   28,   28,   28,   28,   28,
-       28,   28,   21,   28,   28,   28,   28,   28,   26,   24,
-        0,    0,   22,   28,   28,   28,   28,   28,   28,   28,
-       28,   28,   28,   28,   28,   28,   30,   28,   28,   28,
-       28,   28,   28,   28,   28,    5,   28,   28,   28,   28,
-       28,   15,   28,   28,   28,    1,   28,   16,   28,    4,
+        0,    0,   35,   33,   32,   32,   24,   33,   33,   30,
+       26,   24,   24,   24,   33,   29,   29,   29,   29,   29,
+       29,   29,   29,   29,   29,   29,   29,   29,   29,   32,
+        0,   28,    0,    0,    0,    0,   26,   21,   19,   18,
+       20,    0,   29,   29,   29,   29,   29,   29,   29,   29,
+       29,   29,   22,   29,   29,   29,   29,   29,   27,   25,
+        0,    0,   23,   29,   29,   29,   29,   29,    1,   29,
+       29,   29,   29,   29,   29,   29,   31,   29,   29,   29,
+       29,   29,   29,   29,   29,    6,   29,   29,   29,   29,
+       29,   16,   29,   29,   29,    2,   29,   17,   29,    5,
 
-       28,    9,   28,   28,   28,   28,   28,   28,   11,   28,
-       28,    3,   13,   28,   28,    7,   28,   28,   28,    2,
-       28,   28,   28,   14,    6,   28,   12,   28,   28,    8,
-       28,   10,    0
+       29,   10,   29,   29,   29,   29,   29,   29,   12,   29,
+       29,    4,   14,   29,   29,    8,   29,   29,   29,    3,
+       29,   29,   29,   15,    7,   29,   13,   29,   29,    9,
+       29,   11,    0
     } ;
 
 static const YY_CHAR yy_ec[256] =
@@ -348,7 +368,7 @@ static const YY_CHAR yy_ec[256] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    2,    4,    5,    1,    1,    1,    4,    6,    7,
         7,    8,    4,    7,    4,    9,    4,   10,   10,   10,
-       10,   10,   10,   10,   10,   10,   10,    1,    7,   11,
+       10,   10,   10,   10,   10,   10,   10,    7,    7,   11,
        12,   13,    1,   14,   15,   15,   15,   15,   15,   15,
        15,   15,   15,   15,   15,   15,   15,   15,   15,   15,
        15,   15,   15,   15,   15,   15,   15,   15,   15,   15,
@@ -471,6 +491,12 @@ static const flex_int16_t yy_chk[198] =
 
     } ;
 
+/* Table of booleans, true if rule could match eol. */
+static const flex_int32_t yy_rule_can_match_eol[35] =
+    {   0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0,     };
+
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
  */
@@ -478,16 +504,16 @@ static const flex_int16_t yy_chk[198] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "lexer.l"
-#line 2 "lexer.l"
+#line 1 "lexer/lexer.l"
+#line 2 "lexer/lexer.l"
 #include <iostream>
 #include <string>
 //#include "tokens.h"
-#include<../parser/parser.hpp
+#include "../parser/parser.hpp"
 
 using namespace std;
-#line 489 "lex.yy.cc"
-#line 490 "lex.yy.cc"
+#line 515 "lexer/scanner.cpp"
+#line 516 "lexer/scanner.cpp"
 
 #define INITIAL 0
 
@@ -498,7 +524,7 @@ using namespace std;
  */
 #include <unistd.h>
 #endif
-
+    
 #ifndef YY_EXTRA_TYPE
 #define YY_EXTRA_TYPE void *
 #endif
@@ -619,10 +645,10 @@ YY_DECL
 		}
 
 	{
-#line 13 "lexer.l"
+#line 14 "lexer/lexer.l"
 
 
-#line 625 "lex.yy.cc"
+#line 651 "lexer/scanner.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -668,6 +694,16 @@ yy_find_action:
 
 		YY_DO_BEFORE_ACTION;
 
+		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
+			{
+			int yyl;
+			for ( yyl = 0; yyl < yyleng; ++yyl )
+				if ( yytext[yyl] == '\n' )
+					
+    yylineno++;
+;
+			}
+
 do_action:	/* This label is used only to access EOF actions. */
 
 		switch ( yy_act )
@@ -681,203 +717,208 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 15 "lexer.l"
-{ return TOKEN_FUNC; }
+#line 16 "lexer/lexer.l"
+{ return TOKEN_MAIN; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 16 "lexer.l"
-{ return TOKEN_RETURN; }
+#line 17 "lexer/lexer.l"
+{ return TOKEN_FUNC; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 17 "lexer.l"
-{ return TOKEN_PRINT; }
+#line 18 "lexer/lexer.l"
+{ return TOKEN_RETURN; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 18 "lexer.l"
+#line 19 "lexer/lexer.l"
+{ return TOKEN_PRINT; }
+	YY_BREAK
+case 5:
+YY_RULE_SETUP
+#line 20 "lexer/lexer.l"
 { return TOKEN_SCAN; }
 	YY_BREAK
 /* --- PAROLE CHIAVE --- */
-case 5:
-YY_RULE_SETUP
-#line 21 "lexer.l"
-{ return TOKEN_IF; }
-	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 22 "lexer.l"
-{ return TOKEN_ELSE; }
+#line 23 "lexer/lexer.l"
+{ return TOKEN_IF; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 23 "lexer.l"
-{ return TOKEN_THEN; }
+#line 24 "lexer/lexer.l"
+{ return TOKEN_ELSE; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 24 "lexer.l"
-{ return TOKEN_LOOP; }
+#line 25 "lexer/lexer.l"
+{ return TOKEN_THEN; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 25 "lexer.l"
-{ return TOKEN_INT; }
+#line 26 "lexer/lexer.l"
+{ return TOKEN_LOOP; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 26 "lexer.l"
-{ return TOKEN_DOUBLE; }
+#line 27 "lexer/lexer.l"
+{ return TOKEN_INT; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 27 "lexer.l"
-{ return TOKEN_CHAR; }
+#line 28 "lexer/lexer.l"
+{ return TOKEN_DOUBLE; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 28 "lexer.l"
-{ return TOKEN_STRING; }
+#line 29 "lexer/lexer.l"
+{ return TOKEN_CHAR; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 29 "lexer.l"
-{ return TOKEN_VOID; }
+#line 30 "lexer/lexer.l"
+{ return TOKEN_STRING; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 30 "lexer.l"
+#line 31 "lexer/lexer.l"
+{ return TOKEN_VOID; }
+	YY_BREAK
+case 15:
+YY_RULE_SETUP
+#line 32 "lexer/lexer.l"
 { return TOKEN_BOOL; }
 	YY_BREAK
 /* --- BOOLEANI --- */
-case 15:
-YY_RULE_SETUP
-#line 33 "lexer.l"
-{ return TOKEN_TRUE; }
-	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 34 "lexer.l"
+#line 35 "lexer/lexer.l"
+{ return TOKEN_TRUE; }
+	YY_BREAK
+case 17:
+YY_RULE_SETUP
+#line 36 "lexer/lexer.l"
 { return TOKEN_FALSE; }
 	YY_BREAK
 /* --- OPERATORI MULTI-CARATTERE --- */
-case 17:
-YY_RULE_SETUP
-#line 37 "lexer.l"
-{ return TOKEN_EQ; }
-	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 38 "lexer.l"
-{ return TOKEN_NEQ; }
+#line 39 "lexer/lexer.l"
+{ return TOKEN_EQ; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 39 "lexer.l"
-{ return TOKEN_GE; }
+#line 40 "lexer/lexer.l"
+{ return TOKEN_NEQ; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 40 "lexer.l"
-{ return TOKEN_LE; }
+#line 41 "lexer/lexer.l"
+{ return TOKEN_GE; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 41 "lexer.l"
-{ return TOKEN_OR; }
+#line 42 "lexer/lexer.l"
+{ return TOKEN_LE; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 42 "lexer.l"
+#line 43 "lexer/lexer.l"
+{ return TOKEN_OR; }
+	YY_BREAK
+case 23:
+YY_RULE_SETUP
+#line 44 "lexer/lexer.l"
 { return TOKEN_AND; }
 	YY_BREAK
 /* --- OPERATORI SINGOLI --- */
-case 23:
+case 24:
 YY_RULE_SETUP
-#line 45 "lexer.l"
+#line 47 "lexer/lexer.l"
 { return yytext[0]; }
 	YY_BREAK
 /* --- COSTANTI NUMERICHE --- */
-case 24:
+case 25:
 YY_RULE_SETUP
-#line 48 "lexer.l"
+#line 50 "lexer/lexer.l"
 {
                         cout << "[LEXER] Double: " << yytext << endl;
                         return TOKEN_CONST_DOUBLE;
                     }
 	YY_BREAK
-case 25:
+case 26:
 YY_RULE_SETUP
-#line 53 "lexer.l"
+#line 55 "lexer/lexer.l"
 {
                         cout << "[LEXER] Intero: " << yytext << endl;
                         return TOKEN_CONST_INTEGER;
                     }
 	YY_BREAK
 /* --- CARATTERI E STRINGHE --- */
-case 26:
-/* rule 26 can match eol */
+case 27:
+/* rule 27 can match eol */
 YY_RULE_SETUP
-#line 59 "lexer.l"
+#line 61 "lexer/lexer.l"
 {
                         cout << "[LEXER] Carattere: " << yytext << endl;
                         return TOKEN_CONST_CHAR;
                     }
 	YY_BREAK
-case 27:
-/* rule 27 can match eol */
+case 28:
+/* rule 28 can match eol */
 YY_RULE_SETUP
-#line 64 "lexer.l"
+#line 66 "lexer/lexer.l"
 {
                         cout << "[LEXER] Stringa: " << yytext << endl;
                         return TOKEN_CONST_STRING;
                     }
 	YY_BREAK
 /* --- IDENTIFICATORI --- */
-case 28:
+case 29:
 YY_RULE_SETUP
-#line 70 "lexer.l"
+#line 72 "lexer/lexer.l"
 {
                         cout << "[LEXER] ID: " << yytext << endl;
                         return TOKEN_ID;
                       }
 	YY_BREAK
 /* --- PUNTEGGIATURA --- */
-case 29:
+case 30:
 YY_RULE_SETUP
-#line 76 "lexer.l"
+#line 78 "lexer/lexer.l"
 { return yytext[0]; }
 	YY_BREAK
 /* --- COMMENTI (@* ... *@) --- */
-case 30:
-/* rule 30 can match eol */
-YY_RULE_SETUP
-#line 79 "lexer.l"
-{ /* Ignora commenti */ }
-	YY_BREAK
-/* --- SPAZI E TAB --- */
 case 31:
 /* rule 31 can match eol */
 YY_RULE_SETUP
-#line 82 "lexer.l"
+#line 81 "lexer/lexer.l"
+{ /* Ignora commenti */ }
+	YY_BREAK
+/* --- SPAZI E TAB --- */
+case 32:
+/* rule 32 can match eol */
+YY_RULE_SETUP
+#line 84 "lexer/lexer.l"
 { /* ignora */ }
 	YY_BREAK
 /* --- CARATTERI ILLEGALI --- */
-case 32:
+case 33:
 YY_RULE_SETUP
-#line 85 "lexer.l"
+#line 87 "lexer/lexer.l"
 {
                         cout << "[LEXER] Carattere illegale: " << yytext << endl;
                         return TOKEN_SCONOSCIUTO;
                     }
 	YY_BREAK
-case 33:
+case 34:
 YY_RULE_SETUP
-#line 90 "lexer.l"
+#line 92 "lexer/lexer.l"
 ECHO;
 	YY_BREAK
-#line 880 "lex.yy.cc"
+#line 921 "lexer/scanner.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1364,6 +1405,10 @@ int yyFlexLexer::yy_get_next_buffer()
 
 	*--yy_cp = (char) c;
 
+    if ( c == '\n' ){
+        --yylineno;
+    }
+
 	(yytext_ptr) = yy_bp;
 	(yy_hold_char) = *yy_cp;
 	(yy_c_buf_p) = yy_cp;
@@ -1433,6 +1478,11 @@ int yyFlexLexer::yy_get_next_buffer()
 	c = *(unsigned char *) (yy_c_buf_p);	/* cast for 8-bit char's */
 	*(yy_c_buf_p) = '\0';	/* preserve yytext */
 	(yy_hold_char) = *++(yy_c_buf_p);
+
+	if ( c == '\n' )
+		
+    yylineno++;
+;
 
 	return c;
 }
@@ -1840,5 +1890,5 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 90 "lexer.l"
+#line 92 "lexer/lexer.l"
 
