@@ -7,7 +7,7 @@ class ASTVisitor; // Forward declaration
 class VoidNode : public ASTNode {
     public:
 
-        VoidNode() {}
+        VoidNode() = default;
 
         void accept(ASTVisitor& visitor) override;
 };

@@ -20,7 +20,7 @@ class TypeNode;
 class UnaryOpNode;
 class VarDeclNode;
 class VariableNode;
-class voidNode;
+class VoidNode;
 //**INSERT ABOVE if missing**/
 
 class ASTVisitor {

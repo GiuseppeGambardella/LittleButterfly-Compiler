@@ -10,7 +10,5 @@ class NumberNode : public ASTNode {
 
         NumberNode(int val) : value(val) {}
 
-        void accept(ASTVisitor &visitor) override {
-            visitor.visit(*this);
-        }
+        void accept(ASTVisitor &visitor) override;
 };

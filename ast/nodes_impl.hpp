@@ -1,14 +1,14 @@
 #pragma once
-##include "ast_visitor.hpp"
+#include "ast_visitor.hpp"
 
 // INCLUDES FOR ALL NODE TYPES (alphabetical order)
-#include "nodes/AssignNode.hpp"
+#include "nodes/AssignmentNode.hpp"
 #include "nodes/BinaryOpNode.hpp"
 #include "nodes/BlockNode.hpp"
 #include "nodes/BooleanNode.hpp"
 #include "nodes/CharNode.hpp"
-#include "nodes/FuncCallNode.hpp"
-#include "nodes/FuncDeclNode.hpp"
+#include "nodes/FunctionCallNode.hpp"
+#include "nodes/FunctionDeclNode.hpp"
 #include "nodes/IfNode.hpp"
 #include "nodes/LoopNode.hpp"
 #include "nodes/NumberNode.hpp"
@@ -25,13 +25,13 @@
 #include "nodes/VoidNode.hpp"
 
 // IMPLEMENTATIONS FOR accept METHODS OF ALL NODE TYPES (alphabetical order)
-inline void AssignNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
+inline void AssignmentNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
 inline void BinaryOpNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
 inline void BlockNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
 inline void BooleanNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
 inline void CharNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
-inline void FuncCallNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
-inline void FuncDeclNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
+inline void FunctionCallNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
+inline void FunctionDeclNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
 inline void IfNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
 inline void LoopNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
 inline void NumberNode::accept(ASTVisitor &visitor) { visitor.visit(*this); }
