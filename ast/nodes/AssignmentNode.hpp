@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 #include <string>
-#include "ast_node.hpp"
+#include "../ast_node.hpp"
 
 class ASTVisitor; // Forward declaration
 

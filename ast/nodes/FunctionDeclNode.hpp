@@ -2,7 +2,7 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "ast_node.hpp"
+#include "../ast_node.hpp"
 
 class ASTVisitor; // Forward declaration
 
