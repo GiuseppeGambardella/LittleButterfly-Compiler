@@ -64,8 +64,10 @@ class PrintVisitor : public ASTVisitor {
         void visit(FunctionDeclNode& node) override {
             std::cout << "Function definition: " << node.name << std::endl;
             std::cout << "Parameters: ";
-            for (const auto& param : node.parameters) {
-                std::cout << param << " ";
+            for (auto& param : node.parameters) {
+                std::cout << param.name << " : ";
+                param.type.accept(*this);
+                std::cout << "; ";
             }
             std::cout << std::endl;
             std::cout << "Return type:" << std::endl;
