@@ -20,8 +20,6 @@ void yyerror(const char* s) {
 %}
 
 %token-table
-%define parse.error verbose
-%defines "parser.hpp"
 
 %token TOKEN_EOF 0
 %token TOKEN_SCONOSCIUTO
