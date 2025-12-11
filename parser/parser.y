@@ -59,8 +59,8 @@
 %%
 
 program:
-    global_declarations MAIN '(' ')' { cout << "=== [PARSER] MAIN TROVATO CON SUCCESSO! ===" << endl; } '{' instructions '}' {
-        cout << "=== [PARSER] PROGRAMMA ANALIZZATO CON SUCCESSO! ===" << endl;
+    global_declarations function_declaration {
+        $$ = make_node<ProgramNode>(std::move($1), std::move($6));
     }
     ;
 
@@ -78,7 +78,10 @@ instructions:
 /* --- FUNZIONI --- */
 function_declaration:
     FUNC ID '(' params ')' ':' type '{' instructions '}' {
-        cout << "  -> [FUNC] Nuova funzione definita." << endl;
+        $$ = make_node<FunctionDeclNode>($2, std::move($4), std::move($7), std::move($9));
+    }
+    | MAIN '(' ')' '{' instructions '}' {
+        $$ = make_node<FunctionDeclNode>("fly", nullptr, std::move(make_node<VoidNode>()), std::move($7));
     }
     ;
 
@@ -120,7 +123,13 @@ assignment_command:
     ;
 
 type:
-    INT | DOUBLE | STRING | BOOL | CHAR | VOID;
+    INT { $$ = make_node<IntNode>(); }
+    | DOUBLE { $$ = make_node<DoubleNode>(); }
+    | STRING { $$ = make_node<StringNode>(); }
+    | BOOL { $$ = make_node<BoolNode>(); }
+    | CHAR { $$ = make_node<CharNode>(); }
+    | VOID { $$ = make_node<VoidNode>(); }
+    ;
 
 print_command:
     PRINT '(' expression ')' { cout << "  -> [PRINT] Output." << endl; }
@@ -149,30 +158,32 @@ loop_command:
 
 /* --- ESPRESSIONI (Senza comparison_operator intermedio) --- */
 expression:
-      ID
-    | CONST_INTEGER
-    | CONST_DOUBLE
-    | CONST_STRING
-    | CONST_CHAR
-    | expression '+' expression
-    | expression '-' expression
-    | expression '*' expression
-    | expression '/' expression
-    | expression '&' expression
-    | expression EQ expression
-    | expression NEQ expression
-    | expression '<' expression
-    | expression '>' expression
-    | expression LE expression
-    | expression GE expression
+      ID { $$ = make_node<VariableNode>($1); }
+    | CONST_INTEGER { $$ = make_node<NumberNode>($1); }
+    | CONST_DOUBLE { $$ = make_node<RealNode>($1); }
+    | CONST_STRING { $$ = make_node<StringNode>($1); }
+    | CONST_CHAR { $$ = make_node<CharNode>($1); }
     /* --------------------------------------------------------------- */
-    | '(' expression ')'
-    | function_call { cout << "    -> [CALL] Funzione chiamata in espressione." << endl; }
-    | TRUE
-    | FALSE
-    | expression AND expression
-    | expression OR expression
-    | '!' expression
+    | expression '+' expression { $$ = make_node<BinaryOpNode>("+", std::move($1), std::move($3)); }
+    | expression '-' expression { $$ = make_node<BinaryOpNode>("-", std::move($1), std::move($3)); }
+    | expression '*' expression { $$ = make_node<BinaryOpNode>("*", std::move($1), std::move($3)); }
+    | expression '/' expression { $$ = make_node<BinaryOpNode>("/", std::move($1), std::move($3)); }
+    | expression '&' expression { $$ = make_node<BinaryOpNode>("&", std::move($1), std::move($3)); }
+    /* --------------------------------------------------------------- */
+    | expression EQ expression { $$ = make_node<BinaryOpNode>( $2, std::move($1), std::move($3)); }
+    | expression NEQ expression { $$ = make_node<BinaryOpNode>( $2, std::move($1), std::move($3)); }
+    | expression '<' expression { $$ = make_node<BinaryOpNode>( "<", std::move($1), std::move($3)); }
+    | expression '>' expression { $$ = make_node<BinaryOpNode>( ">", std::move($1), std::move($3)); }
+    | expression LE expression { $$ = make_node<BinaryOpNode>( $2, std::move($1), std::move($3)); }
+    | expression GE expression { $$ = make_node<BinaryOpNode>( $2, std::move($1), std::move($3)); }
+    /* --------------------------------------------------------------- */
+    | '(' expression ')' { $$ = std::move($2); }
+    | function_call { $$ = std::move($1); }
+    | TRUE { $$ = make_node<BoolNode>(true); }
+    | FALSE { $$ = make_node<BoolNode>(false); }
+    | expression AND expression { $$ = make_node<BinaryOpNode>( "AND", std::move($1), std::move($3)); }
+    | expression OR expression { $$ = make_node<BinaryOpNode>( "OR", std::move($1), std::move($3)); }
+    | '!' expression { $$ = make_node<UnaryOpNode>( "!", std::move($2)); }
     ;
 
 %%
