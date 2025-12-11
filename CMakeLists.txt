@@ -4,41 +4,57 @@ project(LittleButterfly_Compiler)
 set(CMAKE_CXX_STANDARD 17)
 
 # --- 1. TROVA I PACCHETTI FLEX E BISON ---
-find_package(BISON REQUIRED)
+# Trova Bison automaticamente (prova prima Homebrew, poi sistema)
+if(APPLE)
+    # Su macOS, prova prima Homebrew
+    find_program(BISON_EXECUTABLE 
+        NAMES bison
+        PATHS /opt/homebrew/opt/bison/bin /usr/local/opt/bison/bin
+        NO_DEFAULT_PATH
+    )
+endif()
+
+# Se non trovato, usa quello di sistema
+if(NOT BISON_EXECUTABLE)
+    find_package(BISON REQUIRED)
+else()
+    find_package(BISON REQUIRED)
+    message(STATUS "Using Bison: ${BISON_EXECUTABLE}")
+endif()
+
 find_package(FLEX REQUIRED)
 
 # --- 2. CONFIGURA BISON (PARSER) ---
-# Input: parser/parser.y (Dalla tua cartella parser)
-# Output: Genera parser.cpp e parser.hpp nella cartella di build
+# Output: Genera parser.cpp e parser.hpp nella BUILD DIRECTORY
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/generated)
+
+# Genera i file nella BUILD directory (non SOURCE)
 BISON_TARGET(
         MyParser
-        parser/parser.y
-        ${CMAKE_CURRENT_BINARY_DIR}/parser/parser.cpp
-        DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser/parser.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/parser.y
+        ${CMAKE_CURRENT_BINARY_DIR}/generated/parser.cpp
+        DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/generated/parser.hpp
 )
 
-# --- 3. CONFIGURA FLEX (LEXER) ---
-# Input: lexer/lexer.l (Dalla tua cartella lexer)
-# Output: Genera scanner.cpp nella cartella di build
+# Diciamo a Flex: "Salva scanner.cpp DENTRO build/generated"
 FLEX_TARGET(
         MyScanner
-        lexer/lexer.l
-        ${CMAKE_CURRENT_BINARY_DIR}/lexer/scanner.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/lexer/lexer.l
+        ${CMAKE_CURRENT_BINARY_DIR}/generated/scanner.cpp
 )
 
 # Assicura che il Lexer venga generato DOPO il Parser (per avere parser.hpp)
 ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 
-# --- 4. GESTIONE INCLUDE ---
+# --- 3. GESTIONE INCLUDE ---
 include_directories(
-        .                           # Include la root (per main.cpp)
-        ast
-        ast/nodes
-        ast/helper
-        lexer
-        parser
-        ${CMAKE_CURRENT_BINARY_DIR}/parser  # Per trovare parser.hpp generato
-        ${CMAKE_CURRENT_BINARY_DIR}/lexer   # Per trovare scanner.cpp generato
+        ${CMAKE_CURRENT_SOURCE_DIR}              # Root del progetto
+        ${CMAKE_CURRENT_SOURCE_DIR}/ast
+        ${CMAKE_CURRENT_SOURCE_DIR}/ast/nodes
+        ${CMAKE_CURRENT_SOURCE_DIR}/ast/helper
+        ${CMAKE_CURRENT_SOURCE_DIR}/lexer
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser
+        ${CMAKE_CURRENT_BINARY_DIR}/generated    # File generati nella BUILD dir
 )
 
 # --- 5. FILE SORGENTE AST ---

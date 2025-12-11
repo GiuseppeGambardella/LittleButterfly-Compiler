@@ -1,47 +1,57 @@
-%{
-#include <iostream>
-#include <string>
-using namespace std;
+%skeleton "lalr1.cc"
+%require "3.2"
+%defines
 
-int yylex();
-extern int yyparse();
-extern FILE* yyin;
+%define api.token.constructor
+%define api.value.type variant
+%define parse.assert
 
-extern int yylineno;
-extern char* yytext;
+%define api.namespace {yy}
+%define api.parser.class {yyParser}
+%define api.token.prefix {TOKEN_}
 
-void yyerror(const char* s) {
-    // Ora possiamo usare yylineno e yytext senza errori!
-    cerr << ">>> ERRORE DI SINTASSI (Riga " << yylineno << "): " << s << endl;
-    if (yytext) {
-        cerr << "    Token imprevisto: '" << yytext << "'" << endl;
-    }
+%code requires {
+    #include <string>
+    #include <iostream>
+    
+    // Forward declaration for lexer
+    class yyFlexLexer;
 }
-%}
 
-%token-table
+%param { yyFlexLexer* lexer }
 
-%token TOKEN_EOF 0
-%token TOKEN_SCONOSCIUTO
+%code {
+    #include <FlexLexer.h>
+    
+    // Define a custom yylex that wraps the FlexLexer's yylex
+    int yylex(yyFlexLexer* lexer) {
+        return lexer->yylex();
+    }
+    
+    using namespace std;
+}
+
+%token EOF 0
+%token SCONOSCIUTO
 
 // Tipi e Valori
-%token TOKEN_INT TOKEN_DOUBLE TOKEN_CHAR TOKEN_STRING TOKEN_VOID TOKEN_BOOL
-%token TOKEN_CONST_INTEGER TOKEN_CONST_DOUBLE TOKEN_CONST_CHAR TOKEN_CONST_STRING
-%token TOKEN_TRUE TOKEN_FALSE
-%token TOKEN_ID
+%token INT DOUBLE CHAR STRING VOID BOOL
+%token CONST_INTEGER CONST_DOUBLE CONST_CHAR CONST_STRING
+%token TRUE FALSE
+%token ID
 
 // Keywords
-%token TOKEN_IF TOKEN_THEN TOKEN_ELSE TOKEN_LOOP TOKEN_MAIN
-%token TOKEN_FUNC TOKEN_PRINT TOKEN_SCAN TOKEN_RETURN
+%token IF THEN ELSE LOOP MAIN
+%token FUNC PRINT SCAN RETURN
 
 // Operatori
-%token TOKEN_EQ TOKEN_NEQ TOKEN_LE TOKEN_GE
-%token TOKEN_AND TOKEN_OR
+%token EQ NEQ LE GE
+%token AND OR
 
 /* Priorità: FONDAMENTALE per evitare conflitti */
-%left TOKEN_OR
-%left TOKEN_AND
-%left TOKEN_EQ TOKEN_NEQ '<' '>' TOKEN_LE TOKEN_GE  /* Tutti i confronti allo stesso livello */
+%left OR
+%left AND
+%left EQ NEQ '<' '>' LE GE  /* Tutti i confronti allo stesso livello */
 %left '+' '-' '&'
 %left '*' '/'
 %right '!'
@@ -49,7 +59,7 @@ void yyerror(const char* s) {
 %%
 
 program:
-    global_declarations TOKEN_MAIN '(' ')' { cout << "=== [PARSER] MAIN TROVATO CON SUCCESSO! ===" << endl; } '{' instructions '}' {
+    global_declarations MAIN '(' ')' { cout << "=== [PARSER] MAIN TROVATO CON SUCCESSO! ===" << endl; } '{' instructions '}' {
         cout << "=== [PARSER] PROGRAMMA ANALIZZATO CON SUCCESSO! ===" << endl;
     }
     ;
@@ -67,19 +77,19 @@ instructions:
 
 /* --- FUNZIONI --- */
 function_declaration:
-    TOKEN_FUNC TOKEN_ID '(' params ')' ':' type '{' instructions '}' {
+    FUNC ID '(' params ')' ':' type '{' instructions '}' {
         cout << "  -> [FUNC] Nuova funzione definita." << endl;
     }
     ;
 
 params:
-      params ',' type TOKEN_ID
-    | type TOKEN_ID
+      params ',' type ID
+    | type ID
     | /* empty */
     ;
 
 function_call:
-    TOKEN_ID '(' arguments ')'
+    ID '(' arguments ')'
     ;
 
 arguments:
@@ -95,74 +105,81 @@ instruction:
     | print_command ';'
     | scan_command ';'
     | function_call ';' { cout << "  -> [CALL] Funzione chiamata come comando." << endl; }
-    | TOKEN_RETURN expression ';' { cout << "  -> [RETURN] Comando return." << endl; }
+    | RETURN expression ';' { cout << "  -> [RETURN] Comando return." << endl; }
     | if_command
     | loop_command
     ;
 
 variable_declaration:
-      type TOKEN_ID { cout << "  -> [VAR] Dichiarazione." << endl; }
-    | type TOKEN_ID '=' expression { cout << "  -> [VAR] Inizializzazione." << endl; }
+      type ID { cout << "  -> [VAR] Dichiarazione." << endl; }
+    | type ID '=' expression { cout << "  -> [VAR] Inizializzazione." << endl; }
     ;
 
 assignment_command:
-    TOKEN_ID '=' expression { cout << "  -> [ASSIGN] Assegnamento." << endl; }
+    ID '=' expression { cout << "  -> [ASSIGN] Assegnamento." << endl; }
     ;
 
 type:
-    TOKEN_INT | TOKEN_DOUBLE | TOKEN_STRING | TOKEN_BOOL | TOKEN_CHAR | TOKEN_VOID;
+    INT | DOUBLE | STRING | BOOL | CHAR | VOID;
 
 print_command:
-    TOKEN_PRINT '(' expression ')' { cout << "  -> [PRINT] Output." << endl; }
+    PRINT '(' expression ')' { cout << "  -> [PRINT] Output." << endl; }
     ;
 
 scan_command:
-    TOKEN_SCAN '(' TOKEN_ID ')' { cout << "  -> [SCAN] Input." << endl; }
+    SCAN '(' ID ')' { cout << "  -> [SCAN] Input." << endl; }
     ;
 
 /* --- IF CORRETTO (Senza else_block separato) --- */
 if_command:
       /* Caso 1: Solo IF */
-      TOKEN_IF expression TOKEN_THEN '{' instructions '}'
+      IF expression THEN '{' instructions '}'
       { cout << "  -> [IF] Solo If." << endl; }
 
       /* Caso 2: IF e ELSE */
-    | TOKEN_IF expression TOKEN_THEN '{' instructions '}' TOKEN_ELSE '{' instructions '}'
+    | IF expression THEN '{' instructions '}' ELSE '{' instructions '}'
       { cout << "  -> [IF-ELSE] If con Else." << endl; }
     ;
 
 loop_command:
-    TOKEN_LOOP expression TOKEN_THEN '{' instructions '}' {
+    LOOP expression THEN '{' instructions '}' {
         cout << "  -> [LOOP] Ciclo." << endl;
     }
     ;
 
 /* --- ESPRESSIONI (Senza comparison_operator intermedio) --- */
 expression:
-      TOKEN_ID
-    | TOKEN_CONST_INTEGER
-    | TOKEN_CONST_DOUBLE
-    | TOKEN_CONST_STRING
-    | TOKEN_CONST_CHAR
+      ID
+    | CONST_INTEGER
+    | CONST_DOUBLE
+    | CONST_STRING
+    | CONST_CHAR
     | expression '+' expression
     | expression '-' expression
     | expression '*' expression
     | expression '/' expression
     | expression '&' expression
-    | expression TOKEN_EQ expression
-    | expression TOKEN_NEQ expression
+    | expression EQ expression
+    | expression NEQ expression
     | expression '<' expression
     | expression '>' expression
-    | expression TOKEN_LE expression
-    | expression TOKEN_GE expression
+    | expression LE expression
+    | expression GE expression
     /* --------------------------------------------------------------- */
     | '(' expression ')'
     | function_call { cout << "    -> [CALL] Funzione chiamata in espressione." << endl; }
-    | TOKEN_TRUE
-    | TOKEN_FALSE
-    | expression TOKEN_AND expression
-    | expression TOKEN_OR expression
+    | TRUE
+    | FALSE
+    | expression AND expression
+    | expression OR expression
     | '!' expression
     ;
 
 %%
+
+void yy::yyParser::error(const std::string& msg) {
+    cerr << ">>> ERRORE DI SINTASSI (Riga " << lexer->lineno() << "): " << msg << endl;
+    if (lexer->YYText()) {
+        cerr << "    Token imprevisto: '" << lexer->YYText() << "'" << endl;
+    }
+}

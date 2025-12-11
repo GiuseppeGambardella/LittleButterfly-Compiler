@@ -1,40 +1,13 @@
 #include <iostream>
 #include <fstream>
-#include "parser/parser.hpp"
-
-// Includiamo la libreria C++ di Flex
-#if !defined(yyFlexLexerOnce)
 #include <FlexLexer.h>
-#endif
+#include "parser.hpp"
 
 using namespace std;
 
-// --- VARIABILI GLOBALI PER BISON ---
-// Bison le cerca disperatamente. Noi le creiamo qui.
-int yylineno = 1;
-char* yytext = nullptr;
-
-// Puntatore al lexer C++
-yyFlexLexer *lexer = nullptr;
-
-// --- FUNZIONE PONTE ---
-// Bison chiama questa funzione C. Noi dentro chiamiamo la classe C++.
-int yylex() {
-    if (lexer == nullptr) return 0;
-
-    int token = lexer->yylex();
-
-    // Aggiorniamo le variabili globali così Bison le vede
-    yylineno = lexer->lineno();
-    yytext = (char*)lexer->YYText();
-
-    return token;
-}
-
-// Funzione del parser generata da Bison
-extern int yyparse();
-
 int main(int argc, char** argv) {
+    yyFlexLexer* lexer = nullptr;
+    
     // Leggiamo da un file se passato, altrimenti da tastiera
     if (argc > 1) {
         ifstream* file = new ifstream(argv[1]);
@@ -48,9 +21,15 @@ int main(int argc, char** argv) {
     }
 
     cout << "--- COMPILAZIONE INIZIATA ---" << endl;
-    yyparse();
+    
+    // Crea il parser C++ e passa il lexer come parametro
+    yy::yyParser parser(lexer);
+    
+    // Esegui il parsing
+    int result = parser.parse();
+    
     cout << "--- FINE ---" << endl;
 
     delete lexer;
-    return 0;
+    return result;
 }
