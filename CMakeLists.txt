@@ -79,4 +79,5 @@ add_executable(LittleButterfly_Compiler
 
         # Nodi AST
         ${AST_NODES}
+        lib/FlexLexer.h
 )

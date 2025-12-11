@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <FlexLexer.h>
+#include "lib/FlexLexer.h"
 #include "parser.hpp"
 
 using namespace std;

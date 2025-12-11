@@ -21,7 +21,7 @@
 %param { yyFlexLexer* lexer }
 
 %code {
-    #include <FlexLexer.h>
+    #include "..\lib\FlexLexer.h"
     
     // Define a custom yylex that wraps the FlexLexer's yylex
     int yylex(yyFlexLexer* lexer) {
