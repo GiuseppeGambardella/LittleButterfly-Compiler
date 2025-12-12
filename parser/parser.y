@@ -65,14 +65,14 @@ program:
     ;
 
 global_declarations:
-    global_declarations function_declaration
-    | global_declarations variable_declaration
-    | /* empty */
+    function_declaration global_declarations
+    | variable_declaration global_declarations  ';'
+    | /* empty */ { $$ = nullptr; }
     ;
 
 instructions:
     instructions instruction
-    | /* empty */
+    | /* empty */ { $$ = nullptr; }
     ;
 
 /* --- FUNZIONI --- */
@@ -87,39 +87,39 @@ function_declaration:
 
 params:
       params ',' type ID
-    | type ID
-    | /* empty */
+    | type ID { $$ = make_node<VarDeclNode>(std::move($1), $2); }
+    | /* empty */ { $$ = nullptr; }
     ;
 
 function_call:
-    ID '(' arguments ')'
+    ID '(' arguments ')' { $$ = make_node<FunctionCallNode>($1, std::move($3)); }
     ;
 
 arguments:
       arguments ',' expression
-    | expression
-    | /* empty */
+    | expression { $$ = std::move($1); }
+    | /* empty */ { $$ = nullptr; }
     ;
 
 /* --- ISTRUZIONI --- */
 instruction:
-      variable_declaration ';'
-    | assignment_command ';'
-    | print_command ';'
-    | scan_command ';'
-    | function_call ';' { cout << "  -> [CALL] Funzione chiamata come comando." << endl; }
-    | RETURN expression ';' { cout << "  -> [RETURN] Comando return." << endl; }
-    | if_command
-    | loop_command
+      variable_declaration ';' { $$ = std::move($1); }
+    | assignment_command ';' { $$ = std::move($1); }
+    | print_command ';' { $$ = std::move($1); }
+    | scan_command ';' { $$ = std::move($1); }
+    | function_call ';' { $$ = std::move($1); }
+    | RETURN expression ';' { $$ = make_node<ReturnNode>(std::move($2));  }
+    | if_command { $$ = std::move($1); }
+    | loop_command { $$ = std::move($1); }
     ;
 
 variable_declaration:
-      type ID { cout << "  -> [VAR] Dichiarazione." << endl; }
-    | type ID '=' expression { cout << "  -> [VAR] Inizializzazione." << endl; }
+      type ID { $$ = make_node<VarDeclNode>(std::move($1), $2); }
+    | type ID '=' expression { $$ = make_node<VarDeclNode>(std::move($1), $2, std::move($4)); }
     ;
 
 assignment_command:
-    ID '=' expression { cout << "  -> [ASSIGN] Assegnamento." << endl; }
+    ID '=' expression { $$ = make_node<AssignmentNode>($1, std::move($3)); }
     ;
 
 type:
@@ -132,27 +132,27 @@ type:
     ;
 
 print_command:
-    PRINT '(' expression ')' { cout << "  -> [PRINT] Output." << endl; }
+    PRINT '(' expression ')' { $$ = make_node<PrintNode>(std::move($3)); }
     ;
 
 scan_command:
-    SCAN '(' ID ')' { cout << "  -> [SCAN] Input." << endl; }
+    SCAN '(' ID ')' { $$ = make_node<ScanNode>($3); }
     ;
 
 /* --- IF CORRETTO (Senza else_block separato) --- */
 if_command:
       /* Caso 1: Solo IF */
       IF expression THEN '{' instructions '}'
-      { cout << "  -> [IF] Solo If." << endl; }
+      { $$ = make_node<IfNode>(std::move($2), std::move($5), nullptr); }
 
       /* Caso 2: IF e ELSE */
     | IF expression THEN '{' instructions '}' ELSE '{' instructions '}'
-      { cout << "  -> [IF-ELSE] If con Else." << endl; }
+      { $$ = make_node<IfNode>(std::move($2), std::move($5), std::move($9)); }
     ;
 
 loop_command:
     LOOP expression THEN '{' instructions '}' {
-        cout << "  -> [LOOP] Ciclo." << endl;
+        $$ = make_node<LoopNode>(std::move($2), std::move($5));
     }
     ;
 

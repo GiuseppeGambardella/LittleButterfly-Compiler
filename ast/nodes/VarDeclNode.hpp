@@ -12,5 +12,8 @@ public:
     std::string name;
     std::unique_ptr<ASTNode> initializer; // nullable
 
+    VarDeclNode(const TypeNode& varType, const std::string& varName, std::unique_ptr<ASTNode> init = nullptr)
+        : type(varType), name(varName), initializer(std::move(init)) {}
+
     void accept(ASTVisitor& visitor) override;
 };
