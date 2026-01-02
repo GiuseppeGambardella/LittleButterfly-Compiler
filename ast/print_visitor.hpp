@@ -51,9 +51,8 @@ class PrintVisitor : public ASTVisitor {
             std::cout << "Function definition: " << node.name << std::endl;
             std::cout << "Parameters: ";
             for (auto& param : node.parameters) {
-                std::cout << param.name << " : ";
-                param.type.accept(*this);
-                std::cout << "; ";
+                param->accept(*this);
+                std::cout << " ";
             }
             std::cout << std::endl;
             std::cout << "Return type:" << std::endl;

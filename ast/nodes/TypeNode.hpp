@@ -17,6 +17,8 @@ class TypeNode : public ASTNode {
     public:
         BasicType type;
 
+        TypeNode() : type(BasicType::VOID) {}
+
         TypeNode(BasicType t) : type(t) {}
 
         void accept(ASTVisitor& visitor) override;

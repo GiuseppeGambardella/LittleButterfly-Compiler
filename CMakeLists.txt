@@ -54,6 +54,7 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/ast/helper
         ${CMAKE_CURRENT_SOURCE_DIR}/lexer
         ${CMAKE_CURRENT_SOURCE_DIR}/parser
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib
         ${CMAKE_CURRENT_BINARY_DIR}/generated    # File generati nella BUILD dir
 )
 

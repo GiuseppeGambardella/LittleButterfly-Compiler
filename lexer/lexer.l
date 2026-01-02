@@ -1,123 +1,101 @@
 %{
 #include <iostream>
 #include <string>
-#include "parser.hpp"
+#include "Scanner.hpp" // Includiamo la nostra classe
 
 using namespace std;
 using namespace yy;
 
-// Define aliases for token enum values (using declarations don't work for enum class members)
-#define TOKEN_MAIN yyParser::token::TOKEN_MAIN
-#define TOKEN_FUNC yyParser::token::TOKEN_FUNC  
-#define TOKEN_RETURN yyParser::token::TOKEN_RETURN
-#define TOKEN_PRINT yyParser::token::TOKEN_PRINT
-#define TOKEN_SCAN yyParser::token::TOKEN_SCAN
-#define TOKEN_IF yyParser::token::TOKEN_IF
-#define TOKEN_ELSE yyParser::token::TOKEN_ELSE
-#define TOKEN_THEN yyParser::token::TOKEN_THEN
-#define TOKEN_LOOP yyParser::token::TOKEN_LOOP
-#define TOKEN_INT yyParser::token::TOKEN_INT
-#define TOKEN_DOUBLE yyParser::token::TOKEN_DOUBLE
-#define TOKEN_CHAR yyParser::token::TOKEN_CHAR
-#define TOKEN_STRING yyParser::token::TOKEN_STRING
-#define TOKEN_VOID yyParser::token::TOKEN_VOID
-#define TOKEN_BOOL yyParser::token::TOKEN_BOOL
-#define TOKEN_TRUE yyParser::token::TOKEN_TRUE
-#define TOKEN_FALSE yyParser::token::TOKEN_FALSE
-#define TOKEN_EQ  yyParser::token::TOKEN_EQ
-#define TOKEN_NEQ yyParser::token::TOKEN_NEQ
-#define TOKEN_GE  yyParser::token::TOKEN_GE
-#define TOKEN_LE  yyParser::token::TOKEN_LE
-#define TOKEN_OR  yyParser::token::TOKEN_OR
-#define TOKEN_AND yyParser::token::TOKEN_AND
-#define TOKEN_CONST_DOUBLE yyParser::token::TOKEN_CONST_DOUBLE
-#define TOKEN_CONST_INTEGER yyParser::token::TOKEN_CONST_INTEGER
-#define TOKEN_CONST_CHAR yyParser::token::TOKEN_CONST_CHAR
-#define TOKEN_CONST_STRING yyParser::token::TOKEN_CONST_STRING
-#define TOKEN_ID yyParser::token::TOKEN_ID
-#define TOKEN_SCONOSCIUTO yyParser::token::TOKEN_SCONOSCIUTO
+// Variabile per la location
+yyParser::location_type loc;
+
+#undef YY_DECL
+#define YY_DECL yy::yyParser::symbol_type yy::Scanner::lex()
+#define yyterminate() return yy::yyParser::make_EOF(loc)
+#define YY_USER_ACTION loc.step(); loc.columns(yyleng);
+
+// Macro per i token (uguali a prima)
+#define TOKEN_MAIN    return yyParser::make_MAIN(loc)
+#define TOKEN_FUNC    return yyParser::make_FUNC(loc)
+#define TOKEN_RETURN  return yyParser::make_RETURN(loc)
+#define TOKEN_PRINT   return yyParser::make_PRINT(loc)
+#define TOKEN_SCAN    return yyParser::make_SCAN(loc)
+#define TOKEN_IF      return yyParser::make_IF(loc)
+#define TOKEN_ELSE    return yyParser::make_ELSE(loc)
+#define TOKEN_THEN    return yyParser::make_THEN(loc)
+#define TOKEN_LOOP    return yyParser::make_LOOP(loc)
+#define TOKEN_INT     return yyParser::make_INT(loc)
+#define TOKEN_DOUBLE  return yyParser::make_DOUBLE(loc)
+#define TOKEN_CHAR    return yyParser::make_CHAR(loc)
+#define TOKEN_STRING  return yyParser::make_STRING(loc)
+#define TOKEN_VOID    return yyParser::make_VOID(loc)
+#define TOKEN_BOOL    return yyParser::make_BOOL(loc)
+#define TOKEN_TRUE    return yyParser::make_TRUE(loc)
+#define TOKEN_FALSE   return yyParser::make_FALSE(loc)
+#define TOKEN_EQ      return yyParser::make_EQ(loc)
+#define TOKEN_NEQ     return yyParser::make_NEQ(loc)
+#define TOKEN_GE      return yyParser::make_GE(loc)
+#define TOKEN_LE      return yyParser::make_LE(loc)
+#define TOKEN_OR      return yyParser::make_OR(loc)
+#define TOKEN_AND     return yyParser::make_AND(loc)
+
+#define YY_USER_ACTION loc.step(); loc.columns(yyleng);
 %}
 
+/* MANTENIAMO C++ */
 %option c++
 %option noyywrap
 %option yylineno
+%option yyclass="yy::Scanner"
 
 %%
 
-"fly"                { return TOKEN_MAIN; }
-"defef"              { return TOKEN_FUNC; }
-"flyback"            { return TOKEN_RETURN; }
-"flyout"             { return TOKEN_PRINT; }
-"flyin"              { return TOKEN_SCAN; }
+%{
+  loc.step();
+%}
 
- /* --- PAROLE CHIAVE --- */
-"ifif"              { return TOKEN_IF; }
-"efelsefe"          { return TOKEN_ELSE; }
-"thefen"            { return TOKEN_THEN; }
-"whifilefe"         { return TOKEN_LOOP; }
-"ifint"             { return TOKEN_INT; }
-"refeafaefel"       { return TOKEN_DOUBLE; }
-"chafar"            { return TOKEN_CHAR; }
-"strifing"          { return TOKEN_STRING; }
-"notype"            { return TOKEN_VOID; }
-"bofoofol"          { return TOKEN_BOOL; }
+"fly"               { TOKEN_MAIN; }
+"defef"             { TOKEN_FUNC; }
+"flyback"           { TOKEN_RETURN; }
+"flyout"            { TOKEN_PRINT; }
+"flyin"             { TOKEN_SCAN; }
+"ifif"              { TOKEN_IF; }
+"efelsefe"          { TOKEN_ELSE; }
+"thefen"            { TOKEN_THEN; }
+"whifilefe"         { TOKEN_LOOP; }
+"ifint"             { TOKEN_INT; }
+"refeafaefel"       { TOKEN_DOUBLE; }
+"chafar"            { TOKEN_CHAR; }
+"strifing"          { TOKEN_STRING; }
+"notype"            { TOKEN_VOID; }
+"bofoofol"          { TOKEN_BOOL; }
+"true"              { TOKEN_TRUE; }
+"false"             { TOKEN_FALSE; }
+"=="                { TOKEN_EQ; }
+"<>"                { TOKEN_NEQ; }
+">="                { TOKEN_GE; }
+"<="                { TOKEN_LE; }
+"or"                { TOKEN_OR; }
+"and"               { TOKEN_AND; }
 
- /* --- BOOLEANI --- */
-"true"              { return TOKEN_TRUE; }
-"false"             { return TOKEN_FALSE; }
+[+\-*/=><!\&]       { return yyParser::symbol_type(yytext[0], loc); }
+[(){};,:]           { return yyParser::symbol_type(yytext[0], loc); }
 
- /* --- OPERATORI MULTI-CARATTERE --- */
-"=="                { return TOKEN_EQ; }
-"<>"                { return TOKEN_NEQ; }
-">="                { return TOKEN_GE; }
-"<="                { return TOKEN_LE; }
-"or"                { return TOKEN_OR; }
-"and"               { return TOKEN_AND; }
+[0-9]+"."[0-9]+     { return yyParser::make_CONST_DOUBLE(std::stod(yytext), loc); }
 
- /* --- OPERATORI SINGOLI --- */
-[+\-*/=><!\&]        { return yytext[0]; }
+[0-9]+              { return yyParser::make_CONST_INTEGER(std::stoi(yytext), loc); }
 
- /* --- COSTANTI NUMERICHE --- */
-[0-9]+"."[0-9]+     {
-                        cout << "[LEXER] Double: " << yytext << endl;
-                        return TOKEN_CONST_DOUBLE;
-                    }
+\'([^\\'\\\\]|\\\\.)\' { return yyParser::make_CONST_CHAR(yytext[1], loc); }
 
-[0-9]+              {
-                        cout << "[LEXER] Intero: " << yytext << endl;
-                        return TOKEN_CONST_INTEGER;
-                    }
+\"(\\.|[^"\\])*\" { return yyParser::make_CONST_STRING(std::string(yytext), loc); }
 
- /* --- CARATTERI E STRINGHE --- */
-\\'([^\\'\\\\]|\\\\.)\\'   {
-                        cout << "[LEXER] Carattere: " << yytext << endl;
-                        return TOKEN_CONST_CHAR;
-                    }
+[a-zA-Z_][a-zA-Z0-9_]* { return yyParser::make_ID(std::string(yytext), loc); }
 
-\\\"([^\\\"\\\\]|\\\\.)*\\\"  {
-                        cout << "[LEXER] Stringa: " << yytext << endl;
-                        return TOKEN_CONST_STRING;
-                    }
+"@*"([^*]|\*+[^*@])*\*+"@" { /* Commenti */ }
 
- /* --- IDENTIFICATORI --- */
-[a-zA-Z_][a-zA-Z0-9_]* {
-                        cout << "[LEXER] ID: " << yytext << endl;
-                        return TOKEN_ID;
-                      }
+\n+         { loc.lines(yyleng); loc.step(); }
+[ \t\r]+    { loc.step(); }
 
- /* --- PUNTEGGIATURA --- */
-[(){};,:]            { return yytext[0]; }
-
- /* --- COMMENTI (@* ... *@) --- */
-"@*"([^*]|\*+[^*@])*\*+"@"   { /* Ignora commenti */ }
-
- /* --- SPAZI E TAB --- */
-[ \t\n\r]+          { /* ignora */ }
-
- /* --- CARATTERI ILLEGALI --- */
-.                   {
-                        cout << "[LEXER] Carattere illegale: " << yytext << endl;
-                        return TOKEN_SCONOSCIUTO;
-                    }
+. { throw yyParser::syntax_error(loc, "Carattere non valido: " + std::string(yytext)); }
 
 %%

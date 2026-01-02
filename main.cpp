@@ -1,35 +1,56 @@
 #include <iostream>
 #include <fstream>
-#include "lib/FlexLexer.h"
-#include "parser.hpp"
+#include "Scanner.hpp" // La tua classe Scanner custom
+#include "parser.hpp"  // Header generato da Bison
+#include "ast/ast_node.hpp"
+#include "ast/nodes_impl.hpp"
+#include "ast/print_visitor.hpp"
 
 using namespace std;
 
 int main(int argc, char** argv) {
-    yyFlexLexer* lexer = nullptr;
-    
-    // Leggiamo da un file se passato, altrimenti da tastiera
+    // 1. GESTIONE INPUT (File o Stdin)
+    ifstream file;
+    istream* input = &cin; // Di default leggiamo da tastiera
+
     if (argc > 1) {
-        ifstream* file = new ifstream(argv[1]);
-        if (!file->is_open()) {
-            cerr << "Non posso aprire il file: " << argv[1] << endl;
+        // Se c'è un argomento, proviamo ad aprire il file
+        file.open(argv[1]);
+        if (!file.is_open()) {
+            cerr << "ERRORE CRITICO: Impossibile aprire il file '" << argv[1] << "'" << endl;
             return 1;
         }
-        lexer = new yyFlexLexer(file, &cout);
-    } else {
-        lexer = new yyFlexLexer(&cin, &cout);
+        input = &file;
     }
 
-    cout << "--- COMPILAZIONE INIZIATA ---" << endl;
-    
-    // Crea il parser C++ e passa il lexer come parametro
-    yy::yyParser parser(lexer);
-    
-    // Esegui il parsing
-    int result = parser.parse();
-    
-    cout << "--- FINE ---" << endl;
+    // 2. CREAZIONE DELLO SCANNER
+    // Istanziamo la classe yy::Scanner che abbiamo definito in Scanner.hpp.
+    // Le passiamo il puntatore allo stream di input (file o cin).
+    yy::Scanner scanner(input);
+    std::unique_ptr<ASTNode> astRoot;
 
-    delete lexer;
-    return result;
+    // 3. CREAZIONE DEL PARSER
+    // Il parser prende il nostro scanner come riferimento (vedi %param nel parser.y)
+    yy::yyParser parser(scanner, astRoot);
+
+    cout << "--- INIZIO ANALISI ---" << endl;
+
+    // 4. AVVIO DEL PARSING
+    // parse() restituisce 0 se tutto va bene, 1 se ci sono errori
+    try {
+        int result = parser.parse();
+
+        if (result == 0) {
+            cout << "--- PARSING COMPLETATO CON SUCCESSO! (0) ---" << endl;
+        } else {
+            cout << "--- FALLITO (Errori di sintassi) ---" << endl;
+        }
+        PrintVisitor printer;
+        astRoot->accept(printer);
+        return result;
+
+    } catch (const std::exception& e) {
+        cerr << "ECCEZIONE CATTURATA: " << e.what() << endl;
+        return 1;
+    }
 }
