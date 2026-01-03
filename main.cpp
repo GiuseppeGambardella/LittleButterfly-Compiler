@@ -2,6 +2,7 @@
 #include <fstream>
 #include "Scanner.hpp" // La tua classe Scanner custom
 #include "parser.hpp"  // Header generato da Bison
+#include "symbol_table_visitor.hpp"
 #include "ast/ast_node.hpp"
 #include "ast/nodes_impl.hpp"
 #include "ast/print_visitor.hpp"
@@ -45,8 +46,22 @@ int main(int argc, char** argv) {
         } else {
             cout << "--- FALLITO (Errori di sintassi) ---" << endl;
         }
-        PrintVisitor printer;
-        astRoot->accept(printer);
+        //PrintVisitor printer;
+        //astRoot->accept(printer);
+
+        SymbolTable symTable;
+        SymbolTableVisitor builder(symTable);
+        astRoot->accept(builder);
+
+        if (!builder.getErrors().empty()) {
+            for (auto& e : builder.getErrors())
+                std::cerr << "Semantic error: " << e << "\n";
+            return 1;
+        }
+
+        // Debug
+        symTable.printTable();
+
         return result;
 
     } catch (const std::exception& e) {
