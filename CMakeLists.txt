@@ -58,10 +58,10 @@ include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}/generated    # File generati nella BUILD dir
 )
 
-# --- 5. FILE SORGENTE AST ---
+# --- 4. FILE SORGENTE AST ---
 file(GLOB AST_NODES "ast/nodes/*.hpp")
 
-# --- 6. CREA L'ESEGUIBILE ---
+# --- 5. CREA L'ESEGUIBILE ---
 add_executable(LittleButterfly_Compiler
         # File Generati
         ${BISON_MyParser_OUTPUTS}
