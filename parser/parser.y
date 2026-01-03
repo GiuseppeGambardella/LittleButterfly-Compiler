@@ -266,5 +266,5 @@ expression:
 
 // La firma di error ora prende location_type
 void yy::yyParser::error(const location_type& loc, const std::string& msg) {
-    cerr << ">>> ERRORE DI SINTASSI " << loc << ": " << msg << endl;
+    cerr << ">>> SYNTAX ERROR " << loc << ": " << msg << endl;
 }
