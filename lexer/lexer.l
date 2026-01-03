@@ -87,7 +87,7 @@ yyParser::location_type loc;
 
 \'([^\\'\\\\]|\\\\.)\' { return yyParser::make_CONST_CHAR(yytext[1], loc); }
 
-\"(\\.|[^"\\])*\" { return yyParser::make_CONST_STRING(std::string(yytext), loc); }
+\"(\\.|[^"\\])*\" { return yyParser::make_CONST_STRING(std::string(yytext + 1, yyleng - 2), loc); }
 
 [a-zA-Z_][a-zA-Z0-9_]* { return yyParser::make_ID(std::string(yytext), loc); }
 
