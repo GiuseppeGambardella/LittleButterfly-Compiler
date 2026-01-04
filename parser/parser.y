@@ -173,6 +173,7 @@ instruction:
     | scan_command ';'         { $$ = std::move($1); }
     | function_call ';'        { $$ = std::move($1); }
     | RETURN expression ';'    { $$ = make_node<ReturnNode>(std::move($2)); }
+    | RETURN ';'               { $$ = make_node<ReturnNode>(make_node<VoidNode>()); }
     | if_command               { $$ = std::move($1); }
     | loop_command             { $$ = std::move($1); }
     ;

@@ -37,7 +37,7 @@ public:
     }
 
     // Debug: stampa tabella
-    void printTable() {
+    void printTable() const {
         std::cout << "--- SYMBOL TABLE ---" << std::endl;
         for (const auto& pair : table) {
             // 1. Stampa Nome e Tipo principale

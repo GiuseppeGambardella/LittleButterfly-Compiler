@@ -45,6 +45,9 @@ class SymbolTableVisitor : public ASTVisitor {
                 }
                 // Corpo Main
                 if (auto mainFunc = dynamic_cast<FunctionDeclNode*>(node.mainBlock.get())) {
+                    if (mainFunc->name != "fly") {
+                        error("ABSOLUTE ERROR WARNING: Missing main function 'fly'. £()3");
+                    }
                     analyzeFunctionBody(*mainFunc);
                 }
             }
@@ -52,10 +55,10 @@ class SymbolTableVisitor : public ASTVisitor {
     void visit(VarDeclNode& node) override {
             if (node.initializer) {
                 node.initializer->accept(*this);
-                if (currentType != node.type.type) {
-                    error("Tipo inizializzazione errato per '" + node.name + "'. Atteso: " +
-                          typeToString(node.type.type) + ", Trovato: " + typeToString(currentType));
-                }
+            }
+            if (node.type.type == BasicType::VOID) {
+                error("La variabile '" + node.name + "' non può essere di tipo VOID.");
+                return;
             }
             SymbolInfo info = { node.type.type, false, {} };
             if (!symTable.define(node.name, info)) {
@@ -65,76 +68,17 @@ class SymbolTableVisitor : public ASTVisitor {
 
     // --- GESTIONE CHIAMATE A FUNZIONE ---
     void visit(FunctionCallNode& node) override {
-            SymbolInfo* info = symTable.lookup(node.functionName);
-            if (!info) {
-                error("Funzione non definita: " + node.functionName);
-                currentType = BasicType::VOID;
-                return;
+            for (const auto & argument : node.arguments) {
+                argument->accept(*this);
             }
-            if (!info->isFunction) {
-                error("'" + node.functionName + "' non è una funzione.");
-                return;
-            }
-            if (node.arguments.size() != info->paramTypes.size()) {
-                error("Numero argomenti errato per '" + node.functionName + "'. Atteso: " +
-                      std::to_string(info->paramTypes.size()) + ", Trovato: " + std::to_string(node.arguments.size()));
-            }
-
-            for (size_t i = 0; i < node.arguments.size(); ++i) {
-                node.arguments[i]->accept(*this);
-                if (i < info->paramTypes.size() && currentType != info->paramTypes[i]) {
-                    error("Argomento " + std::to_string(i+1) + " di '" + node.functionName +
-                          "' errato. Atteso: " + typeToString(info->paramTypes[i]) +
-                          ", Trovato: " + typeToString(currentType));
-                }
-            }
-            currentType = info->type; // Il tipo dell'espressione è il tipo di ritorno della funzione
         }
 
     // --- ASSEGNAMENTI E VARIABILI ---
     void visit(AssignmentNode& node) override {
-            SymbolInfo* info = symTable.lookup(node.variableName);
-            if (!info) {
-                error("Variabile non dichiarata: " + node.variableName);
-            } else {
-                node.value->accept(*this);
-                if (info->type != currentType) {
-                    error("Assegnamento errato a '" + node.variableName + "'. Atteso: " +
-                          typeToString(info->type) + ", Trovato: " + typeToString(currentType));
-                }
-            }
-        }
+            node.value->accept(*this);
+    }
 
-    void visit(VariableNode& node) override {
-            SymbolInfo* info  = symTable.lookup(node.name);
-            if (!info) {
-                error("Variabile non trovata: " + node.name);
-                currentType = BasicType::VOID;
-            } else {
-                currentType = info->type;
-            }
-        }
-
-    // --- OPERAZIONI BINARIE ---
-    /*void visit(BinaryOpNode& node) override {
-            node.left->accept(*this);
-            BasicType leftT = currentType;
-            node.right->accept(*this);
-            BasicType rightT = currentType;
-
-            if (leftT != rightT) {
-                error("Operazione binaria tra tipi diversi: " + typeToString(leftT) + " e " + typeToString(rightT));
-            }
-
-            // Imposta il tipo risultante
-            if (node.op == "==" || node.op == "<>" || node.op == "<" ||
-                node.op == ">" || node.op == "<=" || node.op == ">=" ||
-                node.op == "AND" || node.op == "OR") { // Aggiunti AND/OR
-                currentType = BasicType::BOOL;
-                } else {
-                    currentType = leftT; // Es. int + int = int
-                }
-        }*/
+    void visit(VariableNode& node) override { }
 
     // --- FOGLIE E TIPI BASE ---
     void visit(NumberNode& node) override { currentType = BasicType::INT; }
@@ -168,7 +112,6 @@ class SymbolTableVisitor : public ASTVisitor {
             node.operand->accept(*this);
             // Opzionale: perfezionamento tipo
             if (node.op == "!") currentType = BasicType::BOOL;
-            // else rimane il tipo dell'operando (es. -5 rimane INT)
         }
 
     void visit (BinaryOpNode& node) override {
