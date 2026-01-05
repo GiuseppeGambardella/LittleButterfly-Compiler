@@ -86,5 +86,5 @@ add_executable(LittleButterfly_Compiler
         ${AST_NODES}
         lib/FlexLexer.h
         ast/symbol_table_visitor.hpp
-        semantic/type_check_visitor.hpp
+        semantic/semantic_check_visitor.hpp
 )

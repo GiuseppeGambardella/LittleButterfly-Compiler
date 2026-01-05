@@ -5,7 +5,7 @@
 #include "SymbolTable.hpp"
 #include "../ast/helper/helper.h"
 
-class TypeCheckVisitor : public ASTVisitor {
+class SemanticCheckVisitor : public ASTVisitor {
     SymbolTable& symTable;
     BasicType currentType= BasicType::VOID;
     std::vector<std::string> errors;
@@ -13,7 +13,7 @@ class TypeCheckVisitor : public ASTVisitor {
     BasicType expectedReturnType = BasicType::VOID;
 
     public:
-        explicit TypeCheckVisitor(SymbolTable& symbols) : symTable(symbols) {}
+        explicit SemanticCheckVisitor(SymbolTable& symbols) : symTable(symbols) {}
 
         [[nodiscard]] const auto& getErrors() const { return errors; }
 
@@ -177,7 +177,6 @@ class TypeCheckVisitor : public ASTVisitor {
             currentType = BasicType::ERROR;
         }
 
-
         void visit (FunctionCallNode& node) override {
             SymbolInfo* info = symTable.lookup(node.functionName);
             if (!info) {
@@ -209,7 +208,6 @@ class TypeCheckVisitor : public ASTVisitor {
             currentType = info->type; // Il tipo dell'espressione è il tipo di ritorno della funzione
         }
 
-        // TO DO
         void visit (FunctionDeclNode& node) override {
             node.returnType->accept(*this);
             expectedReturnType = currentType;
@@ -219,7 +217,7 @@ class TypeCheckVisitor : public ASTVisitor {
             }
         }
 
-    void visit(ReturnNode& node) override {
+        void visit(ReturnNode& node) override {
             // Case: return <expression>;
             if (node.value) {
                 node.value->accept(*this);
@@ -248,7 +246,6 @@ class TypeCheckVisitor : public ASTVisitor {
                       typeToString(expectedReturnType));
             }
         }
-
 
         void visit(ProgramNode& node) override {
             for (auto& decl : node.globals) {
@@ -337,7 +334,8 @@ class TypeCheckVisitor : public ASTVisitor {
             currentType = node.type;
         }
 
-private:
+    private:
+
         void error(const std::string& message) {
             hasError = true;
             errors.push_back(message);

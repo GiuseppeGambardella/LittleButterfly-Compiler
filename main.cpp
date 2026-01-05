@@ -3,7 +3,7 @@
 #include "Scanner.hpp" // La tua classe Scanner custom
 #include "parser.hpp"  // Header generato da Bison
 #include "symbol_table_visitor.hpp"
-#include "type_check_visitor.hpp"
+#include "semantic_check_visitor.hpp"
 #include "ast/ast_node.hpp"
 #include "ast/nodes_impl.hpp"
 #include "ast/print_visitor.hpp"
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
         // Debug
         symTable.printTable();
 
-        TypeCheckVisitor typeChecker(symTable);
+        SemanticCheckVisitor typeChecker(symTable);
         astRoot->accept(typeChecker);
 
         if (!typeChecker.getErrors().empty()) {
