@@ -184,7 +184,7 @@ instruction:
         $$->line = @$.begin.line;
     }
     | RETURN ';'               {
-        $$ = make_node<ReturnNode>(make_node<VoidNode>());
+        $$ = make_node<ReturnNode>(nullptr);
         $$->line = @$.begin.line;
     }
     | if_command               { $$ = std::move($1); }
