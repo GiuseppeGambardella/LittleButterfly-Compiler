@@ -54,14 +54,8 @@ int main(int argc, char** argv) {
         SymbolTableVisitor builder(symTable);
         astRoot->accept(builder);
 
-        if (!builder.getErrors().empty()) {
-            for (auto& e : builder.getErrors())
-                std::cerr << "Semantic error: " << e << "\n";
-            return 1;
-        }
-
         // Debug
-        symTable.printTable();
+        //symTable.printTable();
 
         SemanticCheckVisitor typeChecker(symTable);
         astRoot->accept(typeChecker);

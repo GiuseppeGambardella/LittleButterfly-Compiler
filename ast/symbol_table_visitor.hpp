@@ -1,11 +1,7 @@
-//
-// Created by marcb on 03/01/2026.
-//
 #pragma once
 #include "ast_visitor.hpp"
 #include "nodes_impl.hpp"
 #include <iostream>
-
 #include "SymbolTable.hpp"
 
 class SymbolTableVisitor final : public ASTVisitor {
