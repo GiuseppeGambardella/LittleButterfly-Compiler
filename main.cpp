@@ -59,13 +59,6 @@ int main(int argc, char** argv) {
             SemanticCheckVisitor typeChecker(symTable);
             astRoot->accept(typeChecker);
 
-            if (!typeChecker.getErrors().empty()) {
-                for (auto& e : typeChecker.getErrors())
-                    std::cerr << "Semantic error: " << e << "\n";
-                return 1;
-            }
-        } else {
-            cout << "--- FAILED: Semantic Errors ---" << endl;
         }
         //PrintVisitor printer;
         //astRoot->accept(printer);

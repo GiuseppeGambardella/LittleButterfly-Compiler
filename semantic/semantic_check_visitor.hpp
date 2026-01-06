@@ -72,35 +72,32 @@ public:
     node.right->accept(*this);
     BasicType rightT = currentType;
 
-    /* ===============================
-       ARITHMETIC OPERATORS
-       +  -  *  /
-       =============================== */
+    // --- 1. GESTIONE CONCATENAZIONE (&) ---
+    if (node.op == "&") {
+      // L'operatore & accetta tutto basta che non sia VOID
+      if (leftT == BasicType::VOID || rightT == BasicType::VOID) {
+        error("Cannot concatenate VOID types.", node.line);
+        currentType = BasicType::VOID;
+      } else {
+        // Il risultato è SEMPRE una stringa (es. 10 & 20 -> "1020")
+        currentType = BasicType::STRING;
+      }
+      return; // Esce subito.
+    }
+
+    // --- 2. GESTIONE ARITMETICA (+, -, *, /) ---
     if (node.op == "+" || node.op == "-" || node.op == "*" || node.op == "/") {
-      // Numeric arithmetic: INT / REAL combinations allowed
+      // Qui entriamo SOLO se l'operatore è matematico
       if ((leftT == BasicType::INT || leftT == BasicType::DOUBLE) &&
           (rightT == BasicType::INT || rightT == BasicType::DOUBLE)) {
-        // Type promotion: if either is REAL → REAL
+
+        // Type promotion: se c'è un DOUBLE, il risultato è DOUBLE
         currentType =
             (leftT == BasicType::DOUBLE || rightT == BasicType::DOUBLE)
                 ? BasicType::DOUBLE
                 : BasicType::INT;
         return;
-      }
-
-      // String concatenation
-      if (node.op == "&") {
-        // L'operatore & accetta tutto (es. "Ciao" & 5, 10 & 20) basta che non
-        // sia VOID
-        if (leftT == BasicType::VOID || rightT == BasicType::VOID) {
-          error("Cannot concatenate VOID types.", node.line);
-          currentType = BasicType::VOID;
-        } else {
-          // Il risultato di una concatenazione è SEMPRE una stringa
-          currentType = BasicType::STRING;
-        }
-        return; // Esce subito
-      }
+          }
 
       error("Invalid operands for arithmetic operator '" + node.op +
                 "': " + typeToString(leftT) + " and " + typeToString(rightT),
@@ -113,6 +110,7 @@ public:
        LOGICAL OPERATORS
        AND  OR
        =============================== */
+
     if (node.op == "AND" || node.op == "OR") {
       if (leftT == BasicType::BOOL && rightT == BasicType::BOOL) {
         currentType = BasicType::BOOL;
@@ -227,12 +225,8 @@ public:
       if (currentType == BasicType::ERROR)
         return;
 
-      // Allow INT -> REAL promotion
+      // Not allow INT -> REAL promotion
       if (currentType == expectedReturnType)
-        return;
-
-      if (expectedReturnType == BasicType::DOUBLE &&
-          currentType == BasicType::INT)
         return;
 
       error("Return type mismatch. Expected: " +

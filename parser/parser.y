@@ -63,7 +63,8 @@
 %left OR
 %left AND
 %left EQ NEQ '<' '>' LE GE
-%left '+' '-' '&'
+%left '&'
+%left '+' '-'
 %left '*' '/'
 %right '!'
 
