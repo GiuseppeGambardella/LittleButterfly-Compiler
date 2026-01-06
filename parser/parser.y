@@ -63,7 +63,8 @@
 %left OR
 %left AND
 %left EQ NEQ '<' '>' LE GE
-%left '+' '-' '&'
+%left '&'
+%left '+' '-'
 %left '*' '/'
 %right '!'
 
@@ -84,6 +85,7 @@
 program:
     global_declarations function_declaration {
         $$ = make_node<ProgramNode>(std::move($1), std::move($2));
+        $$->line = @$.begin.line;
         astRoot = std::move($$);
     }
     ;
@@ -119,6 +121,7 @@ function_declaration:
         auto retType = std::make_unique<TypeNode>(std::move($7));
 
         $$ = make_node<FunctionDeclNode>($2, std::move($4), std::move(retType), std::move(body));
+        $$->line = @$.begin.line;
     }
     | MAIN '(' ')' '{' instructions '}' {
         auto body = make_node<BlockNode>(std::move($5));
@@ -126,6 +129,7 @@ function_declaration:
         std::vector<std::unique_ptr<ASTNode>> emptyParams;
 
         $$ = make_node<FunctionDeclNode>("fly", std::move(emptyParams), std::move(voidType), std::move(body));
+        $$->line = @$.begin.line;
     }
     ;
 
@@ -136,10 +140,12 @@ params:
     | type ID {
           std::vector<std::unique_ptr<ASTNode>> p;
           p.push_back(make_node<VarDeclNode>(std::move($1), $2));
+          p.back()->line = @$.begin.line;
           $$ = std::move(p);
       }
     | params ',' type ID {
           $1.push_back(make_node<VarDeclNode>(std::move($3), $4));
+          $1.back()->line = @$.begin.line;
           $$ = std::move($1);
       }
     ;
@@ -147,6 +153,7 @@ params:
 function_call:
     ID '(' arguments ')' {
         $$ = make_node<FunctionCallNode>($1, std::move($3));
+        $$->line = @$.begin.line;
     }
     ;
 
@@ -172,7 +179,14 @@ instruction:
     | print_command ';'        { $$ = std::move($1); }
     | scan_command ';'         { $$ = std::move($1); }
     | function_call ';'        { $$ = std::move($1); }
-    | RETURN expression ';'    { $$ = make_node<ReturnNode>(std::move($2)); }
+    | RETURN expression ';'    {
+        $$ = make_node<ReturnNode>(std::move($2));
+        $$->line = @$.begin.line;
+    }
+    | RETURN ';'               {
+        $$ = make_node<ReturnNode>(nullptr);
+        $$->line = @$.begin.line;
+    }
     | if_command               { $$ = std::move($1); }
     | loop_command             { $$ = std::move($1); }
     ;
@@ -180,30 +194,34 @@ instruction:
 variable_declaration:
       type ID {
           $$ = make_node<VarDeclNode>(std::move($1), $2);
+          $$->line = @$.begin.line;
       }
     | type ID '=' expression {
           $$ = make_node<VarDeclNode>(std::move($1), $2, std::move($4));
+          $$->line = @$.begin.line;
       }
     ;
 
 assignment_command:
     ID '=' expression {
         $$ = make_node<AssignmentNode>($1, std::move($3));
+        $$->line = @$.begin.line;
     }
     ;
 
-type:
-      INT    { $$ = TypeNode(BasicType::INT); }
-    | DOUBLE { $$ = TypeNode(BasicType::DOUBLE); }
-    | STRING { $$ = TypeNode(BasicType::STRING); }
-    | BOOL   { $$ = TypeNode(BasicType::BOOL); }
-    | CHAR   { $$ = TypeNode(BasicType::CHAR); }
-    | VOID   { $$ = TypeNode(BasicType::VOID); }
+    type:
+      INT    { $$ = TypeNode(BasicType::INT); $$.line = @$.begin.line; }
+    | DOUBLE { $$ = TypeNode(BasicType::DOUBLE); $$.line = @$.begin.line; }
+    | STRING { $$ = TypeNode(BasicType::STRING); $$.line = @$.begin.line; }
+    | BOOL   { $$ = TypeNode(BasicType::BOOL); $$.line = @$.begin.line; }
+    | CHAR   { $$ = TypeNode(BasicType::CHAR); $$.line = @$.begin.line; }
+    | VOID   { $$ = TypeNode(BasicType::VOID); $$.line = @$.begin.line; }
     ;
 
 print_command:
     PRINT '(' expression ')' {
         $$ = make_node<PrintNode>(std::move($3));
+        $$->line = @$.begin.line;
     }
     ;
 
@@ -211,18 +229,21 @@ scan_command:
     SCAN '(' ID ')' {
         auto varNode = make_node<VariableNode>($3);
         $$ = make_node<ReadNode>(std::move(varNode));
+        $$->line = @$.begin.line;
     }
     ;
 
-if_command:
+    if_command:
       IF expression THEN '{' instructions '}' {
           auto block = make_node<BlockNode>(std::move($5));
           $$ = make_node<IfNode>(std::move($2), std::move(block), nullptr);
+          $$->line = @$.begin.line;
       }
     | IF expression THEN '{' instructions '}' ELSE '{' instructions '}' {
           auto thenBlock = make_node<BlockNode>(std::move($5));
           auto elseBlock = make_node<BlockNode>(std::move($9));
           $$ = make_node<IfNode>(std::move($2), std::move(thenBlock), std::move(elseBlock));
+          $$->line = @$.begin.line;
       }
     ;
 
@@ -230,36 +251,52 @@ loop_command:
     LOOP expression THEN '{' instructions '}' {
         auto block = make_node<BlockNode>(std::move($5));
         $$ = make_node<LoopNode>(std::move($2), std::move(block));
+        $$->line = @$.begin.line;
     }
     ;
 
 expression:
-      ID { $$ = make_node<VariableNode>($1); }
-    | CONST_INTEGER { $$ = make_node<NumberNode>($1); }
-    | CONST_DOUBLE  { $$ = make_node<RealNode>($1); }
-    | CONST_STRING  { $$ = make_node<StringNode>($1); }
-    | CONST_CHAR    { $$ = make_node<CharNode>($1); }
+      ID {
+        $$ = make_node<VariableNode>($1);
+        $$->line = @$.begin.line;
+    }
+    | CONST_INTEGER {
+        $$ = make_node<NumberNode>($1);
+        $$->line = @$.begin.line;
+    }
+    | CONST_DOUBLE  {
+        $$ = make_node<RealNode>($1);
+        $$->line = @$.begin.line;
+    }
+    | CONST_STRING  {
+        $$ = make_node<StringNode>($1);
+        $$->line = @$.begin.line;
+    }
+    | CONST_CHAR    {
+        $$ = make_node<CharNode>($1);
+        $$->line = @$.begin.line;
+    }
 
-    | expression '+' expression { $$ = make_node<BinaryOpNode>("+", std::move($1), std::move($3)); }
-    | expression '-' expression { $$ = make_node<BinaryOpNode>("-", std::move($1), std::move($3)); }
-    | expression '*' expression { $$ = make_node<BinaryOpNode>("*", std::move($1), std::move($3)); }
-    | expression '/' expression { $$ = make_node<BinaryOpNode>("/", std::move($1), std::move($3)); }
-    | expression '&' expression { $$ = make_node<BinaryOpNode>("&", std::move($1), std::move($3)); }
+    | expression '+' expression { $$ = make_node<BinaryOpNode>("+", std::move($1), std::move($3)); $$->line = @$.begin.line; }
+    | expression '-' expression { $$ = make_node<BinaryOpNode>("-", std::move($1), std::move($3)); $$->line = @$.begin.line; }
+    | expression '*' expression { $$ = make_node<BinaryOpNode>("*", std::move($1), std::move($3)); $$->line = @$.begin.line; }
+    | expression '/' expression { $$ = make_node<BinaryOpNode>("/", std::move($1), std::move($3)); $$->line = @$.begin.line; }
+    | expression '&' expression { $$ = make_node<BinaryOpNode>("&", std::move($1), std::move($3)); $$->line = @$.begin.line; }
 
-    | expression EQ expression  { $$ = make_node<BinaryOpNode>("==", std::move($1), std::move($3)); }
-    | expression NEQ expression { $$ = make_node<BinaryOpNode>("<>", std::move($1), std::move($3)); }
-    | expression '<' expression { $$ = make_node<BinaryOpNode>("<",  std::move($1), std::move($3)); }
-    | expression '>' expression { $$ = make_node<BinaryOpNode>(">",  std::move($1), std::move($3)); }
-    | expression LE expression  { $$ = make_node<BinaryOpNode>("<=", std::move($1), std::move($3)); }
-    | expression GE expression  { $$ = make_node<BinaryOpNode>(">=", std::move($1), std::move($3)); }
+    | expression EQ expression  { $$ = make_node<BinaryOpNode>("==", std::move($1), std::move($3)); $$->line = @$.begin.line; }
+    | expression NEQ expression { $$ = make_node<BinaryOpNode>("<>", std::move($1), std::move($3)); $$->line = @$.begin.line; }
+    | expression '<' expression { $$ = make_node<BinaryOpNode>("<",  std::move($1), std::move($3)); $$->line = @$.begin.line; }
+    | expression '>' expression { $$ = make_node<BinaryOpNode>(">",  std::move($1), std::move($3)); $$->line = @$.begin.line; }
+    | expression LE expression  { $$ = make_node<BinaryOpNode>("<=", std::move($1), std::move($3)); $$->line = @$.begin.line; }
+    | expression GE expression  { $$ = make_node<BinaryOpNode>(">=", std::move($1), std::move($3)); $$->line = @$.begin.line; }
 
     | '(' expression ')'        { $$ = std::move($2); }
     | function_call             { $$ = std::move($1); }
-    | TRUE                      { $$ = make_node<BooleanNode>(true); }
-    | FALSE                     { $$ = make_node<BooleanNode>(false); }
-    | expression AND expression { $$ = make_node<BinaryOpNode>("AND", std::move($1), std::move($3)); }
-    | expression OR expression  { $$ = make_node<BinaryOpNode>("OR",  std::move($1), std::move($3)); }
-    | '!' expression            { $$ = make_node<UnaryOpNode>("!", std::move($2)); }
+    | TRUE                      { $$ = make_node<BooleanNode>(true); $$->line = @$.begin.line; }
+    | FALSE                     { $$ = make_node<BooleanNode>(false); $$->line = @$.begin.line; }
+    | expression AND expression { $$ = make_node<BinaryOpNode>("AND", std::move($1), std::move($3)); $$->line = @$.begin.line; }
+    | expression OR expression  { $$ = make_node<BinaryOpNode>("OR",  std::move($1), std::move($3)); $$->line = @$.begin.line; }
+    | '!' expression            { $$ = make_node<UnaryOpNode>("!", std::move($2)); $$->line = @$.begin.line; }
     ;
 
 %%

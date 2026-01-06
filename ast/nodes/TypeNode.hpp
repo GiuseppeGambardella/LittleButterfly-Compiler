@@ -10,7 +10,8 @@ enum class BasicType {
     STRING,
     BOOL,
     CHAR,
-    VOID
+    VOID,
+    ERROR
 };
 
 class TypeNode : public ASTNode {

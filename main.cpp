@@ -2,6 +2,8 @@
 #include <fstream>
 #include "Scanner.hpp" // La tua classe Scanner custom
 #include "parser.hpp"  // Header generato da Bison
+#include "symbol_table_visitor.hpp"
+#include "semantic_check_visitor.hpp"
 #include "ast/ast_node.hpp"
 #include "ast/nodes_impl.hpp"
 #include "ast/print_visitor.hpp"
@@ -17,7 +19,7 @@ int main(int argc, char** argv) {
         // Se c'è un argomento, proviamo ad aprire il file
         file.open(argv[1]);
         if (!file.is_open()) {
-            cerr << "ERRORE CRITICO: Impossibile aprire il file '" << argv[1] << "'" << endl;
+            cerr << "CRITICAL ERROR: Unable to open file. '" << argv[1] << "'" << endl;
             return 1;
         }
         input = &file;
@@ -33,7 +35,7 @@ int main(int argc, char** argv) {
     // Il parser prende il nostro scanner come riferimento (vedi %param nel parser.y)
     yy::yyParser parser(scanner, astRoot);
 
-    cout << "--- INIZIO ANALISI ---" << endl;
+    cout << "--- START... ---" << endl;
 
     // 4. AVVIO DEL PARSING
     // parse() restituisce 0 se tutto va bene, 1 se ci sono errori
@@ -41,16 +43,34 @@ int main(int argc, char** argv) {
         int result = parser.parse();
 
         if (result == 0) {
-            cout << "--- PARSING COMPLETATO CON SUCCESSO! (0) ---" << endl;
-        } else {
-            cout << "--- FALLITO (Errori di sintassi) ---" << endl;
+            cout << "--- PARSING COMPLETED! ---" << endl;
+            SymbolTable symTable;
+            SymbolTableVisitor builder(symTable);
+            astRoot->accept(builder);
+
+            if (!builder.getErrors().empty()) {
+                for (auto& e : builder.getErrors())
+                    std::cerr << "Semantic error: " << e << "\n";
+                return 1;
+            }
+            // Debug
+            //symTable.printTable();
+
+            SemanticCheckVisitor typeChecker(symTable);
+            astRoot->accept(typeChecker);
+
         }
-        PrintVisitor printer;
-        astRoot->accept(printer);
+        else {
+            cerr << "--- PARSING FAILED! ---" << endl;
+            return result;
+        }
+        //PrintVisitor printer;
+        //astRoot->accept(printer);
+
         return result;
 
     } catch (const std::exception& e) {
-        cerr << "ECCEZIONE CATTURATA: " << e.what() << endl;
+        cerr << "EXCEPTION: " << e.what() << endl;
         return 1;
     }
 }

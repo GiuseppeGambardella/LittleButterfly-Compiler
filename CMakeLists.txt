@@ -7,10 +7,10 @@ set(CMAKE_CXX_STANDARD 17)
 # Trova Bison automaticamente (prova prima Homebrew, poi sistema)
 if(APPLE)
     # Su macOS, prova prima Homebrew
-    find_program(BISON_EXECUTABLE 
-        NAMES bison
-        PATHS /opt/homebrew/opt/bison/bin /usr/local/opt/bison/bin
-        NO_DEFAULT_PATH
+    find_program(BISON_EXECUTABLE
+            NAMES bison
+            PATHS /opt/homebrew/opt/bison/bin /usr/local/opt/bison/bin
+            NO_DEFAULT_PATH
     )
 endif()
 
@@ -55,6 +55,7 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/lexer
         ${CMAKE_CURRENT_SOURCE_DIR}/parser
         ${CMAKE_CURRENT_SOURCE_DIR}/lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/semantic
         ${CMAKE_CURRENT_BINARY_DIR}/generated    # File generati nella BUILD dir
 )
 
@@ -78,7 +79,12 @@ add_executable(LittleButterfly_Compiler
         ast/print_visitor.hpp
         ast/helper/helper.h
 
+        # File Symbol Table
+        semantic/SymbolTable.hpp
+
         # Nodi AST
         ${AST_NODES}
         lib/FlexLexer.h
+        ast/symbol_table_visitor.hpp
+        semantic/semantic_check_visitor.hpp
 )

@@ -17,6 +17,7 @@ inline std::string typeToString(BasicType type) {
         case BasicType::BOOL:   return "Boolean";
         case BasicType::STRING: return "String";
         case BasicType::VOID:   return "Void";
+        case BasicType::ERROR:  return "Error";
         default:                return "Unknown";
     }
 }
