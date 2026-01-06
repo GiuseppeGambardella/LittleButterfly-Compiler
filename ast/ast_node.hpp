@@ -2,8 +2,9 @@
 #include <memory>
 class ASTVisitor; // Forward declaration
 
-class ASTNode{
-    public:
-        virtual ~ASTNode() = default;
-        virtual void accept(ASTVisitor &visitor) = 0;
+class ASTNode {
+public:
+    int line = 0;
+    virtual ~ASTNode() = default;
+    virtual void accept(ASTVisitor &visitor) = 0;
 };

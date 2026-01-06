@@ -7,10 +7,10 @@ set(CMAKE_CXX_STANDARD 17)
 # Trova Bison automaticamente (prova prima Homebrew, poi sistema)
 if(APPLE)
     # Su macOS, prova prima Homebrew
-    find_program(BISON_EXECUTABLE 
-        NAMES bison
-        PATHS /opt/homebrew/opt/bison/bin /usr/local/opt/bison/bin
-        NO_DEFAULT_PATH
+    find_program(BISON_EXECUTABLE
+            NAMES bison
+            PATHS /opt/homebrew/opt/bison/bin /usr/local/opt/bison/bin
+            NO_DEFAULT_PATH
     )
 endif()
 
