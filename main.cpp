@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
         // Se c'è un argomento, proviamo ad aprire il file
         file.open(argv[1]);
         if (!file.is_open()) {
-            cerr << "CRITICAL ERROR: File not opened. '" << argv[1] << "'" << endl;
+            cerr << "CRITICAL ERROR: Unable to open file. '" << argv[1] << "'" << endl;
             return 1;
         }
         input = &file;
@@ -59,6 +59,10 @@ int main(int argc, char** argv) {
             SemanticCheckVisitor typeChecker(symTable);
             astRoot->accept(typeChecker);
 
+        }
+        else {
+            cerr << "--- PARSING FAILED! ---" << endl;
+            return result;
         }
         //PrintVisitor printer;
         //astRoot->accept(printer);

@@ -6,11 +6,11 @@
 #include <iostream>
 
 class SemanticCheckVisitor : public ASTVisitor {
-  SymbolTable &symTable;
-  BasicType currentType = BasicType::VOID;
-  std::vector<std::string> errors;
-  bool hasError = false;
-  BasicType expectedReturnType = BasicType::VOID;
+  SymbolTable &symTable; //tabella dei simboli
+  BasicType currentType = BasicType::VOID; // tipo corrente durante la visita
+  std::vector<std::string> errors; // lista degli errori semantici
+  bool hasError = false; // flag per indicare se c'è stato un errore
+  BasicType expectedReturnType = BasicType::VOID; // tipo di ritorno previsto
 
 public:
   explicit SemanticCheckVisitor(SymbolTable &symbols) : symTable(symbols) {}
@@ -77,7 +77,7 @@ public:
       // L'operatore & accetta tutto basta che non sia VOID
       if (leftT == BasicType::VOID || rightT == BasicType::VOID) {
         error("Cannot concatenate VOID types.", node.line);
-        currentType = BasicType::VOID;
+        currentType = BasicType::ERROR;
       } else {
         // Il risultato è SEMPRE una stringa (es. 10 & 20 -> "1020")
         currentType = BasicType::STRING;
@@ -175,13 +175,13 @@ public:
     SymbolInfo *info = symTable.lookup(node.functionName);
     if (!info) {
       error("Function not declared: " + node.functionName, node.line);
-      currentType = BasicType::VOID; // TO DO (some error type?)
+      currentType = BasicType::ERROR;
       return;
     }
 
     if (!info->isFunction) {
       error("'" + node.functionName + "' is not a function", node.line);
-      currentType = BasicType::VOID; // TO DO (some error type?)
+      currentType = BasicType::ERROR;
       return;
     }
 

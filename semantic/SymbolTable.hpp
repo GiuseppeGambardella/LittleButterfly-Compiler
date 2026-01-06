@@ -27,7 +27,9 @@ public:
         return true;
     }
 
-    // Cerca un simbolo. Ritorna false se non esiste.
+    // ATTENZIONE: Ritorna un puntatore interno alla mappa.
+    // NON memorizzare questo puntatore a lungo termine se la tabella viene modificata.
+    // Può essere invalidato da un rehash della unordered_map.
     SymbolInfo* lookup(const std::string& name) {
         auto it = table.find(name);
         if (it != table.end()) {
