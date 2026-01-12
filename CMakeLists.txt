@@ -3,10 +3,20 @@ project(LittleButterfly_Compiler)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# --- 1. TROVA I PACCHETTI FLEX E BISON ---
-# Trova Bison automaticamente (prova prima Homebrew, poi sistema)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if (MSVC)
+    add_compile_options(/Zc:__cplusplus)
+endif()
+
+
+# =========================================================
+# 1. FIND PACKAGES
+# =========================================================
+
+# --- 1.1 Bison & Flex ---
 if(APPLE)
-    # Su macOS, prova prima Homebrew
     find_program(BISON_EXECUTABLE
             NAMES bison
             PATHS /opt/homebrew/opt/bison/bin /usr/local/opt/bison/bin
@@ -14,7 +24,6 @@ if(APPLE)
     )
 endif()
 
-# Se non trovato, usa quello di sistema
 if(NOT BISON_EXECUTABLE)
     find_package(BISON REQUIRED)
 else()
@@ -24,31 +33,25 @@ endif()
 
 find_package(FLEX REQUIRED)
 
-# --- 2. CONFIGURA BISON (PARSER) ---
-# Output: Genera parser.cpp e parser.hpp nella BUILD DIRECTORY
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/generated)
+# --- 1.2 LLVM & MLIR ---
+find_package(MLIR REQUIRED CONFIG)
+find_package(LLVM REQUIRED CONFIG)
 
-# Genera i file nella BUILD directory (non SOURCE)
-BISON_TARGET(
-        MyParser
-        ${CMAKE_CURRENT_SOURCE_DIR}/parser/parser.y
-        ${CMAKE_CURRENT_BINARY_DIR}/generated/parser.cpp
-        DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/generated/parser.hpp
-)
+# =========================================================
+# 2. GLOBAL CONFIGURATION & INCLUDES
+# =========================================================
 
-# Diciamo a Flex: "Salva scanner.cpp DENTRO build/generated"
-FLEX_TARGET(
-        MyScanner
-        ${CMAKE_CURRENT_SOURCE_DIR}/lexer/lexer.l
-        ${CMAKE_CURRENT_BINARY_DIR}/generated/scanner.cpp
-)
+# --- 2.1 LLVM/MLIR Setup ---
+list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
+include_directories(${LLVM_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
 
-# Assicura che il Lexer venga generato DOPO il Parser (per avere parser.hpp)
-ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
+# --- 2.2 Flex/Bison Definitions ---
+add_compile_definitions(YY_NO_UNISTD_H)
 
-# --- 3. GESTIONE INCLUDE ---
+# --- 2.3 Project Includes ---
 include_directories(
-        ${CMAKE_CURRENT_SOURCE_DIR}              # Root del progetto
+        ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/ast
         ${CMAKE_CURRENT_SOURCE_DIR}/ast/nodes
         ${CMAKE_CURRENT_SOURCE_DIR}/ast/helper
@@ -56,35 +59,71 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/parser
         ${CMAKE_CURRENT_SOURCE_DIR}/lib
         ${CMAKE_CURRENT_SOURCE_DIR}/semantic
-        ${CMAKE_CURRENT_BINARY_DIR}/generated    # File generati nella BUILD dir
+        ${CMAKE_CURRENT_BINARY_DIR}/generated
 )
 
-# --- 4. FILE SORGENTE AST ---
+# =========================================================
+# 3. CODE GENERATION (Lexer & Parser)
+# =========================================================
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/generated)
+
+BISON_TARGET(
+        MyParser
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser/parser.y
+        ${CMAKE_CURRENT_BINARY_DIR}/generated/parser.cpp
+        DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/generated/parser.hpp
+)
+
+FLEX_TARGET(
+        MyScanner
+        ${CMAKE_CURRENT_SOURCE_DIR}/lexer/lexer.l
+        ${CMAKE_CURRENT_BINARY_DIR}/generated/scanner.cpp
+)
+
+ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
+
+# =========================================================
+# 4. TARGET DEFINITION
+# =========================================================
+
+# --- 4.1 Collect Sources ---
 file(GLOB AST_NODES "ast/nodes/*.hpp")
 
-# --- 5. CREA L'ESEGUIBILE ---
+# --- 4.2 Add Executable ---
 add_executable(LittleButterfly_Compiler
-        # File Generati
         ${BISON_MyParser_OUTPUTS}
         ${FLEX_MyScanner_OUTPUTS}
-
-        # Main (Nella root)
         main.cpp
-
-        # File AST Core
         ast/ast_factory.hpp
         ast/ast_node.hpp
         ast/ast_visitor.hpp
         ast/nodes_impl.hpp
         ast/print_visitor.hpp
         ast/helper/helper.h
-
-        # File Symbol Table
         semantic/SymbolTable.hpp
-
-        # Nodi AST
         ${AST_NODES}
         lib/FlexLexer.h
         ast/symbol_table_visitor.hpp
         semantic/semantic_check_visitor.hpp
+)
+
+# =========================================================
+# 5. LINKING & TARGET PROPERTIES
+# =========================================================
+
+# --- 5.1 Include Directories for Target ---
+target_include_directories(LittleButterfly_Compiler PRIVATE ${MLIR_INCLUDE_DIRS})
+
+# --- 5.2 Link Libraries ---
+target_link_libraries(LittleButterfly_Compiler PRIVATE
+        MLIRIR
+        MLIRSupport
+
+        MLIRFuncDialect
+        MLIRArithDialect
+        MLIRSCFDialect
+        MLIRMemRefDialect
+
+        LLVMCore
+        LLVMSupport
 )
