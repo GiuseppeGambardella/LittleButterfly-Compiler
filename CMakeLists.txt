@@ -66,6 +66,7 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/lib
         ${CMAKE_CURRENT_SOURCE_DIR}/semantic
         ${CMAKE_CURRENT_BINARY_DIR}/generated
+        ${CMAKE_CURRENT_SOURCE_DIR}/mlir
 )
 
 # =========================================================
@@ -112,6 +113,7 @@ add_executable(LittleButterfly_Compiler
         ast/symbol_table_visitor.hpp
         semantic/semantic_check_visitor.hpp
         mlir/mlir_gen_visitor.hpp
+        mlir/mlir_gen_visitor.cpp
 )
 
 # =========================================================
