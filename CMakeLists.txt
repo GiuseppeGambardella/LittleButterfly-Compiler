@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (MSVC)
-    add_compile_options(/Zc:__cplusplus)
+    add_compile_options(/Zc:__cplusplus /wd4005 /wd4065)
 endif()
 
 
@@ -34,8 +34,13 @@ endif()
 find_package(FLEX REQUIRED)
 
 # --- 1.2 LLVM & MLIR ---
-find_package(MLIR REQUIRED CONFIG)
 find_package(LLVM REQUIRED CONFIG)
+find_package(MLIR REQUIRED CONFIG)
+
+list(APPEND CMAKE_MODULE_PATH "${MLIR_CMAKE_DIR}")
+include(AddMLIR)
+include(AddLLVM)
+
 
 # =========================================================
 # 2. GLOBAL CONFIGURATION & INCLUDES
@@ -44,6 +49,7 @@ find_package(LLVM REQUIRED CONFIG)
 # --- 2.1 LLVM/MLIR Setup ---
 list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
 include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(${MLIR_INCLUDE_DIRS})
 add_definitions(${LLVM_DEFINITIONS})
 
 # --- 2.2 Flex/Bison Definitions ---
@@ -105,6 +111,7 @@ add_executable(LittleButterfly_Compiler
         lib/FlexLexer.h
         ast/symbol_table_visitor.hpp
         semantic/semantic_check_visitor.hpp
+        mlir/mlir_gen_visitor.hpp
 )
 
 # =========================================================
@@ -126,4 +133,8 @@ target_link_libraries(LittleButterfly_Compiler PRIVATE
 
         LLVMCore
         LLVMSupport
+
+        MLIRParser
+        MLIRPass
+        MLIRTransforms
 )
