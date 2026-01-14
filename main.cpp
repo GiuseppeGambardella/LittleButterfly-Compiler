@@ -7,6 +7,10 @@
 #include <mlir/Dialect/MemRef/IR/MemRef.h>
 #include <mlir/Dialect/SCF/IR/SCF.h>
 
+#include <llvm/Support/FileSystem.h>
+#include <llvm/Support/raw_ostream.h>
+
+
 #include "lowering.hpp"
 #include "Scanner.hpp" // La tua classe Scanner custom
 #include "parser.hpp"  // Header generato da Bison
@@ -86,25 +90,40 @@ int main(int argc, char** argv) {
             MLIRGenVisitor mlirGen(context, symTable);
             astRoot->accept(mlirGen);
 
+            mlirGen.emitMainWrapper();
+
             mlir::ModuleOp module = mlirGen.theModule;
 
-            // Dump MLIR su stdout
+            /*// Dump MLIR su stdout
             std::cout << "\n===== MLIR DUMP =====\n";
             mlirGen.dump();
-            std::cout << "\n=====================\n";
+            std::cout << "\n=====================\n";*/
 
             lowering::registerDialects(context);
             lowering::lowerToLLVMDialect(module);
 
-            std::cout << "\n===== MLIR LLVM DIALECT =====\n";
+            /*std::cout << "\n===== MLIR LLVM DIALECT =====\n";
             module.dump();
-            std::cout << "\n============================\n";
+            std::cout << "\n============================\n";*/
 
             llvm::LLVMContext llvm_context;
             auto llvmModule = lowering::translateToLLVMIR(module, llvm_context);
 
-            // Dump LLVM IR
-            llvmModule->print(llvm::outs(), nullptr);
+            // Scrivi LLVM IR
+            std::error_code EC;
+            llvm::raw_fd_ostream out("output.ll", EC);
+            llvmModule->print(out, nullptr);
+            out.flush();
+
+            // Compila con clang
+            if (std::system("clang -D_CRT_SECURE_NO_WARNINGS output.ll runtime/runtime.cpp -o program.exe") != 0) {
+                std::cerr << "clang failed\n";
+                return 1;
+            }
+
+            // Esegui
+            std::system("program.exe");
+
         }
         else {
             cerr << "--- PAR"

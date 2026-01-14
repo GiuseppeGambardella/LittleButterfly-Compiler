@@ -22,31 +22,64 @@ void MLIRGenVisitor::dump() {
 }
 
 void MLIRGenVisitor::declareRuntimeFunctions() {
-    // 1. print_int(i32) -> void
+    auto loc = builder.getUnknownLoc();
     auto i32 = builder.getI32Type();
-    builder.create<mlir::func::FuncOp>(builder.getUnknownLoc(), "print_int",
-        builder.getFunctionType({i32}, {})).setPrivate();
-
-    // 2. print_double(f64) -> void
     auto f64 = builder.getF64Type();
-    builder.create<mlir::func::FuncOp>(builder.getUnknownLoc(), "print_double",
-        builder.getFunctionType({f64}, {})).setPrivate();
-
-    // --- NUOVE AGGIUNTE PER CHAR E STRINGHE ---
-
-    // 3. print_char(i8) -> void
     auto i8 = builder.getI8Type();
-    builder.create<mlir::func::FuncOp>(builder.getUnknownLoc(), "print_char",
-        builder.getFunctionType({i8}, {})).setPrivate();
+    auto i1 = builder.getI1Type();
+    auto voidType = builder.getNoneType();
 
-    // 4. print_string(memref<?xi8>) -> void
-    // Definiamo un array di char a dimensione dinamica
-    auto stringType = mlir::MemRefType::get(
-        {mlir::ShapedType::kDynamic}, // Dimensione ignota (?)
-        i8                            // Tipo elemento (char)
-    );
-    builder.create<mlir::func::FuncOp>(builder.getUnknownLoc(), "print_string",
-        builder.getFunctionType({stringType}, {})).setPrivate();
+    // --- PRINT (Output) ---
+    builder.create<mlir::func::FuncOp>(loc, "print_int", builder.getFunctionType({i32}, {})).setPrivate();
+    builder.create<mlir::func::FuncOp>(loc, "print_double", builder.getFunctionType({f64}, {})).setPrivate();
+    builder.create<mlir::func::FuncOp>(loc, "print_char", builder.getFunctionType({i8}, {})).setPrivate();
+
+    auto stringType = mlir::MemRefType::get({mlir::ShapedType::kDynamic}, i8);
+    builder.create<mlir::func::FuncOp>(loc, "print_string", builder.getFunctionType({stringType}, {})).setPrivate();
+
+    // --- READ (Input) - AGGIUNTO! ---
+    // Senza queste, visit(ReadNode) fallirebbe
+    builder.create<mlir::func::FuncOp>(loc, "read_int", builder.getFunctionType({}, {i32})).setPrivate();
+    builder.create<mlir::func::FuncOp>(loc, "read_double", builder.getFunctionType({}, {f64})).setPrivate();
+    builder.create<mlir::func::FuncOp>(loc, "read_char", builder.getFunctionType({}, {i8})).setPrivate();
+
+    // =========================
+    // TO_STRING
+    // =========================
+
+    builder.create<mlir::func::FuncOp>(
+        loc, "to_string_int",
+        builder.getFunctionType({i32}, {stringType})
+    ).setPrivate();
+
+    builder.create<mlir::func::FuncOp>(
+        loc, "to_string_double",
+        builder.getFunctionType({f64}, {stringType})
+    ).setPrivate();
+
+    builder.create<mlir::func::FuncOp>(
+        loc, "to_string_bool",
+        builder.getFunctionType({i1}, {stringType})
+    ).setPrivate();
+
+    builder.create<mlir::func::FuncOp>(
+        loc, "to_string_char",
+        builder.getFunctionType({i8}, {stringType})
+    ).setPrivate();
+
+    builder.create<mlir::func::FuncOp>(
+        loc, "to_string_string",
+        builder.getFunctionType({stringType}, {stringType})
+    ).setPrivate();
+
+    // =========================
+    // CONCAT
+    // =========================
+
+    builder.create<mlir::func::FuncOp>(
+        loc, "concat_strings",
+        builder.getFunctionType({stringType, stringType}, {stringType})
+    ).setPrivate();
 }
 
 mlir::Type MLIRGenVisitor::getMLIRType(BasicType type) {
@@ -202,17 +235,15 @@ void MLIRGenVisitor::visit(VarDeclNode& node) {
     else initAttr = builder.getIntegerAttr(type, 0);*/
 
     if (!theModule.lookupSymbol<mlir::memref::GlobalOp>(node.name)) {
-        if (!theModule.lookupSymbol<mlir::memref::GlobalOp>(node.name)) {
-            builder.create<mlir::memref::GlobalOp>(
-                builder.getUnknownLoc(),
-                node.name,
-                builder.getStringAttr("private"),
-                memRefType,
-                /*initial_value=*/mlir::Attribute(),  // unit (assente)
-                /*constant=*/false,
-                /*alignment=*/nullptr
-            );
-        }
+        builder.create<mlir::memref::GlobalOp>(
+        builder.getUnknownLoc(),
+        node.name,
+        builder.getStringAttr("private"),
+        memRefType,
+        /*initial_value=*/mlir::Attribute(),  // unit (assente)
+        /*constant=*/false,
+        /*alignment=*/nullptr
+        );
     }
 
     // 2. Torna nel contesto locale per l'inizializzazione
@@ -308,6 +339,7 @@ void MLIRGenVisitor::visit(LoopNode& node) {
 // ==========================================================
 
 void MLIRGenVisitor::visit(BinaryOpNode& node) {
+    std::cerr << "BinaryOp op = [" << node.op << "]\n";
     node.left->accept(*this);
     mlir::Value lhs = lastValue;
 
@@ -349,6 +381,69 @@ void MLIRGenVisitor::visit(BinaryOpNode& node) {
 
         return;
     }
+
+    // --------------------------------------------------
+        // 0. CONCATENAZIONE STRINGHE (&)
+        // --------------------------------------------------
+        if (node.op == "&") {
+            // Valuta LHS
+            node.left->accept(*this);
+            mlir::Value lhs = lastValue;
+            mlir::Type lhsType = lhs.getType();
+
+            // Valuta RHS
+            node.right->accept(*this);
+            mlir::Value rhs = lastValue;
+            mlir::Type rhsType = rhs.getType();
+
+            auto loc = builder.getUnknownLoc();
+
+            auto stringType = mlir::MemRefType::get(
+                {mlir::ShapedType::kDynamic},
+                builder.getI8Type()
+            );
+
+            // Helper: converte Value → stringa
+            auto toString = [&](mlir::Value v, mlir::Type t) -> mlir::Value {
+                std::string fn;
+
+                if (t.isInteger(32)) fn = "to_string_int";
+                else if (t.isInteger(1)) fn = "to_string_bool";
+                else if (t.isF64()) fn = "to_string_double";
+                else if (t.isInteger(8)) fn = "to_string_char";
+                else if (mlir::isa<mlir::MemRefType>(t)) fn = "to_string_string";
+                else {
+                    std::cerr << "Errore: tipo non convertibile a stringa\n";
+                    return nullptr;
+                }
+
+                auto callee = theModule.lookupSymbol<mlir::func::FuncOp>(fn);
+                auto call = builder.create<mlir::func::CallOp>(
+                    loc,
+                    fn,
+                    callee.getResultTypes(),
+                    mlir::ValueRange{v}
+                );
+
+                return call.getResult(0);
+            };
+
+            mlir::Value lhsStr = toString(lhs, lhsType);
+            mlir::Value rhsStr = toString(rhs, rhsType);
+
+            auto concatFn = theModule.lookupSymbol<mlir::func::FuncOp>("concat_strings");
+            auto concatCall = builder.create<mlir::func::CallOp>(
+                loc,
+                "concat_strings",
+                concatFn.getResultTypes(),
+                mlir::ValueRange{lhsStr, rhsStr}
+            );
+
+            lastValue = concatCall.getResult(0);
+            return;
+        }
+
+
 
     // --------------------------------------------------
     // 2. CONFRONTI
@@ -751,3 +846,32 @@ void MLIRGenVisitor::visit(StringNode& node) {
 // Nodi non usati o vuoti
 void MLIRGenVisitor::visit(TypeNode& node) {}
 void MLIRGenVisitor::visit(VoidNode& node) {}
+
+
+// ==========================================================
+// wrapper main
+void MLIRGenVisitor::emitMainWrapper() {
+    auto loc = builder.getUnknownLoc();
+    auto mainType = builder.getFunctionType({}, builder.getI32Type());
+
+    // 1. Inseriamo la funzione nel modulo
+    builder.setInsertionPointToEnd(theModule.getBody());
+    auto mainFunc = builder.create<mlir::func::FuncOp>(loc, "main", mainType);
+    mainFunc.setPublic();
+
+    // 2. Creiamo il blocco e ci entriamo
+    auto *entryBlock = mainFunc.addEntryBlock();
+    builder.setInsertionPointToStart(entryBlock);
+
+    // 3. INSERIAMO LA CHIAMATA A "fly" (CORREZIONE IMPORTANTE)
+    // Prima usavi CallOp::create che creava l'oggetto "in aria" senza inserirlo.
+    auto flyFunc = theModule.lookupSymbol<mlir::func::FuncOp>("fly");
+    if (flyFunc) {
+        builder.create<mlir::func::CallOp>(loc, "fly", flyFunc.getResultTypes(), mlir::ValueRange{});
+    }
+
+    // 4. Return 0
+    auto zero = builder.create<mlir::arith::ConstantIntOp>(loc, 0, 32);
+    builder.create<mlir::func::ReturnOp>(loc, mlir::ValueRange{zero});
+}
+

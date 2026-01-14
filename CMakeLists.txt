@@ -122,6 +122,7 @@ add_executable(LittleButterfly_Compiler
         mlir/mlir_gen_visitor.cpp
         mlir/lowering.hpp
         mlir/lowering.cpp
+        runtime/runtime.cpp
 )
 
 # =========================================================

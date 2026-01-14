@@ -54,6 +54,7 @@ public:
     // Dichiara le funzioni di runtime esterne (es. print)
     void declareRuntimeFunctions();
 
+    void emitMainWrapper();
     // Converte i tipi AST (BasicType) in tipi MLIR
     mlir::Type getMLIRType(BasicType type);
 

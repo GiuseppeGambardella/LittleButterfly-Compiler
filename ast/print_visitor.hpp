@@ -16,11 +16,17 @@ class PrintVisitor : public ASTVisitor {
         }
 
         void visit(BinaryOpNode& node) override {
-            std::cout << "Binary Operation: " << node.op << std::endl;
+            /*std::cout << "Binary Operation: " << node.op << std::endl;
             std::cout << "Left operand:" << std::endl;
             node.left->accept(*this);
             std::cout << "Right operand:" << std::endl;
-            node.right->accept(*this);
+            node.right->accept(*this);*/
+                std::cout << "(";
+                node.left->accept(*this);
+                std::cout << " " << node.op << " ";
+                node.right->accept(*this);
+                std::cout << ")";
+
         }
 
         void visit(BlockNode& node) override {
