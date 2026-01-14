@@ -60,6 +60,8 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/ast
         ${CMAKE_CURRENT_SOURCE_DIR}/ast/nodes
+        ${CMAKE_CURRENT_SOURCE_DIR}/ast/nodes/expression
+        ${CMAKE_CURRENT_SOURCE_DIR}/ast/nodes/statements
         ${CMAKE_CURRENT_SOURCE_DIR}/ast/helper
         ${CMAKE_CURRENT_SOURCE_DIR}/lexer
         ${CMAKE_CURRENT_SOURCE_DIR}/parser
@@ -95,8 +97,8 @@ ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 
 # --- 4.1 Collect Sources ---
 file(GLOB AST_NODES "ast/nodes/*.hpp")
-file(GLOB AST_NODES_EXPR "ast/nodes/expr/*.hpp")
-file(GLOB AST_NODES_STMT "ast/nodes/stmt/*.hpp")
+file(GLOB AST_NODES_EXPR "ast/nodes/expression/*.hpp")
+file(GLOB AST_NODES_STMT "ast/nodes/statements/*.hpp")
 
 # --- 4.2 Add Executable ---
 add_executable(LittleButterfly_Compiler
@@ -111,13 +113,15 @@ add_executable(LittleButterfly_Compiler
         ast/helper/helper.h
         semantic/SymbolTable.hpp
         ${AST_NODES}
+        ${AST_NODES_EXPR}
+        ${AST_NODES_STMT}
         lib/FlexLexer.h
         ast/symbol_table_visitor.hpp
         semantic/semantic_check_visitor.hpp
         mlir/mlir_gen_visitor.hpp
         mlir/mlir_gen_visitor.cpp
-        mlir/lowering.cpp
         mlir/lowering.hpp
+        mlir/lowering.cpp
 )
 
 # =========================================================
@@ -150,6 +154,8 @@ target_link_libraries(LittleButterfly_Compiler PRIVATE
         MLIRLLVMIRTransforms
 
         MLIRTargetLLVMIRExport
+        MLIRBuiltinToLLVMIRTranslation
+        MLIRLLVMToLLVMIRTranslation
         MLIRTranslateLib
 
         LLVMCore

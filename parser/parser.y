@@ -18,7 +18,7 @@
     #include <memory>
 
     // Includiamo TypeNode per passarlo per valore
-    #include "ast/nodes/TypeNode.hpp"
+    #include "ast/nodes/expression/TypeNode.hpp"
 
     // Forward declaration del nostro Scanner custom
     namespace yy { class Scanner; }
