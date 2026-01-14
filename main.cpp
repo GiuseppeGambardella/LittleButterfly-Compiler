@@ -1,5 +1,12 @@
 #include <iostream>
 #include <fstream>
+#include <mlir/IR/MLIRContext.h>
+#include <mlir/IR/BuiltinOps.h>
+#include <mlir/Dialect/Func/IR/FuncOps.h>
+#include <mlir/Dialect/Arith/IR/Arith.h>
+#include <mlir/Dialect/MemRef/IR/MemRef.h>
+#include <mlir/Dialect/SCF/IR/SCF.h>
+
 #include "Scanner.hpp" // La tua classe Scanner custom
 #include "parser.hpp"  // Header generato da Bison
 #include "symbol_table_visitor.hpp"
@@ -7,6 +14,7 @@
 #include "ast/ast_node.hpp"
 #include "ast/nodes_impl.hpp"
 #include "ast/print_visitor.hpp"
+#include "mlir/mlir_gen_visitor.hpp"
 
 using namespace std;
 
@@ -58,7 +66,29 @@ int main(int argc, char** argv) {
 
             SemanticCheckVisitor typeChecker(symTable);
             astRoot->accept(typeChecker);
+            if (!typeChecker.getErrors().empty()) {
+                return 1;
+            }
+            cout << "--- SEMANTIC CHECK COMPLETED! ---" << endl;
 
+            // =======================
+            // MLIR CODE GENERATION
+            // =======================
+            mlir::MLIRContext context;
+
+            // (opzionale ma consigliato)
+            context.getOrLoadDialect<mlir::func::FuncDialect>();
+            context.getOrLoadDialect<mlir::arith::ArithDialect>();
+            context.getOrLoadDialect<mlir::memref::MemRefDialect>();
+            context.getOrLoadDialect<mlir::scf::SCFDialect>();
+
+            MLIRGenVisitor mlirGen(context, symTable);
+            astRoot->accept(mlirGen);
+
+            // Dump MLIR su stdout
+            std::cout << "\n===== MLIR DUMP =====\n";
+            mlirGen.dump();
+            std::cout << "\n=====================\n";
         }
         else {
             cerr << "--- PARSING FAILED! ---" << endl;

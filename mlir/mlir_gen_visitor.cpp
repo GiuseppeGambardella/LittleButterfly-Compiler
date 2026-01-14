@@ -4,8 +4,8 @@
 // COSTRUTTORE E HELPER DI BASE
 // ==========================================================
 
-MLIRGenVisitor::MLIRGenVisitor(mlir::MLIRContext& ctx)
-    : context(ctx), builder(&ctx) {
+MLIRGenVisitor::MLIRGenVisitor(mlir::MLIRContext& ctx, SymbolTable& symTable)
+    : context(ctx), symTable(symTable), builder(&ctx) {
 
     // Creazione del Modulo vuoto
     theModule = mlir::ModuleOp::create(builder.getUnknownLoc());
@@ -302,44 +302,110 @@ void MLIRGenVisitor::visit(LoopNode& node) {
 void MLIRGenVisitor::visit(BinaryOpNode& node) {
     node.left->accept(*this);
     mlir::Value lhs = lastValue;
+
     node.right->accept(*this);
     mlir::Value rhs = lastValue;
+
     auto loc = builder.getUnknownLoc();
 
-    bool isFloat = lhs.getType().isF64();
+    auto lhsType = lhs.getType();
+    auto rhsType = rhs.getType();
 
-    if (node.op == "+") {
-        if (isFloat) lastValue = builder.create<mlir::arith::AddFOp>(loc, lhs, rhs);
-        else lastValue = builder.create<mlir::arith::AddIOp>(loc, lhs, rhs);
+    // --------------------------------------------------
+    // 1. OPERATORI LOGICI: and / or
+    // --------------------------------------------------
+    if (node.op == "and" || node.op == "or") {
+
+        // Normalizza LHS a i1
+        if (!lhsType.isInteger(1)) {
+            auto zero = builder.create<mlir::arith::ConstantIntOp>(loc, 0, 32);
+            lhs = builder.create<mlir::arith::CmpIOp>(
+                loc, mlir::arith::CmpIPredicate::ne, lhs, zero
+            );
+        }
+
+        // Normalizza RHS a i1
+        if (!rhsType.isInteger(1)) {
+            auto zero = builder.create<mlir::arith::ConstantIntOp>(loc, 0, 32);
+            rhs = builder.create<mlir::arith::CmpIOp>(
+                loc, mlir::arith::CmpIPredicate::ne, rhs, zero
+            );
+        }
+
+        // AND / OR
+        if (node.op == "and") {
+            lastValue = builder.create<mlir::arith::AndIOp>(loc, lhs, rhs);
+        } else {
+            lastValue = builder.create<mlir::arith::OrIOp>(loc, lhs, rhs);
+        }
+
+        return;
     }
-    else if (node.op == "-") {
-        if (isFloat) lastValue = builder.create<mlir::arith::SubFOp>(loc, lhs, rhs);
-        else lastValue = builder.create<mlir::arith::SubIOp>(loc, lhs, rhs);
-    }
-    else if (node.op == "*") {
-        if (isFloat) lastValue = builder.create<mlir::arith::MulFOp>(loc, lhs, rhs);
-        else lastValue = builder.create<mlir::arith::MulIOp>(loc, lhs, rhs);
-    }
-    else if (node.op == "/") {
-        if (isFloat) lastValue = builder.create<mlir::arith::DivFOp>(loc, lhs, rhs);
-        else lastValue = builder.create<mlir::arith::DivSIOp>(loc, lhs, rhs);
-    }
-    else if (node.op == "==" || node.op == "<" || node.op == ">") {
+
+    // --------------------------------------------------
+    // 2. CONFRONTI
+    // --------------------------------------------------
+    if (node.op == "==" || node.op == "!=" ||
+        node.op == "<"  || node.op == "<=" ||
+        node.op == ">"  || node.op == ">=") {
+
+        bool isFloat = lhsType.isF64();
+
         if (isFloat) {
             mlir::arith::CmpFPredicate pred;
+
             if (node.op == "==") pred = mlir::arith::CmpFPredicate::OEQ;
-            else if (node.op == "<") pred = mlir::arith::CmpFPredicate::OLT;
-            else pred = mlir::arith::CmpFPredicate::OGT;
+            else if (node.op == "!=") pred = mlir::arith::CmpFPredicate::ONE;
+            else if (node.op == "<")  pred = mlir::arith::CmpFPredicate::OLT;
+            else if (node.op == "<=") pred = mlir::arith::CmpFPredicate::OLE;
+            else if (node.op == ">")  pred = mlir::arith::CmpFPredicate::OGT;
+            else                      pred = mlir::arith::CmpFPredicate::OGE;
+
             lastValue = builder.create<mlir::arith::CmpFOp>(loc, pred, lhs, rhs);
         } else {
             mlir::arith::CmpIPredicate pred;
+
             if (node.op == "==") pred = mlir::arith::CmpIPredicate::eq;
-            else if (node.op == "<") pred = mlir::arith::CmpIPredicate::slt;
-            else pred = mlir::arith::CmpIPredicate::sgt;
+            else if (node.op == "!=") pred = mlir::arith::CmpIPredicate::ne;
+            else if (node.op == "<")  pred = mlir::arith::CmpIPredicate::slt;
+            else if (node.op == "<=") pred = mlir::arith::CmpIPredicate::sle;
+            else if (node.op == ">")  pred = mlir::arith::CmpIPredicate::sgt;
+            else                      pred = mlir::arith::CmpIPredicate::sge;
+
             lastValue = builder.create<mlir::arith::CmpIOp>(loc, pred, lhs, rhs);
         }
+
+        return;
     }
+
+    // --------------------------------------------------
+    // 3. ARITMETICA
+    // --------------------------------------------------
+    bool isFloat = lhsType.isF64();
+
+    if (node.op == "+") {
+        lastValue = isFloat
+            ? builder.create<mlir::arith::AddFOp>(loc, lhs, rhs).getResult()
+            : builder.create<mlir::arith::AddIOp>(loc, lhs, rhs).getResult();
+    }
+    else if (node.op == "-") {
+        lastValue = isFloat
+            ? builder.create<mlir::arith::SubFOp>(loc, lhs, rhs).getResult()
+            : builder.create<mlir::arith::SubIOp>(loc, lhs, rhs).getResult();
+    }
+    else if (node.op == "*") {
+        lastValue = isFloat
+            ? builder.create<mlir::arith::MulFOp>(loc, lhs, rhs).getResult()
+            : builder.create<mlir::arith::MulIOp>(loc, lhs, rhs).getResult();
+    }
+    else if (node.op == "/") {
+        lastValue = isFloat
+            ? builder.create<mlir::arith::DivFOp>(loc, lhs, rhs).getResult()
+            : builder.create<mlir::arith::DivSIOp>(loc, lhs, rhs).getResult();
+    }
+
 }
+
 
 void MLIRGenVisitor::visit(UnaryOpNode& node) {
     node.operand->accept(*this);
@@ -390,7 +456,7 @@ void MLIRGenVisitor::visit(CharNode& node) {
     lastValue = builder.create<mlir::arith::ConstantOp>(builder.getUnknownLoc(), type, llvm::cast<mlir::TypedAttr>(attr));
 }
 
-void MLIRGenVisitor::visit(PrintNode& node) {
+/*void MLIRGenVisitor::visit(PrintNode& node) {
     // 1. Calcola il valore dell'espressione
     node.expression->accept(*this);
     mlir::Value arg = lastValue;
@@ -449,7 +515,79 @@ void MLIRGenVisitor::visit(PrintNode& node) {
 
     // 4. Genera la chiamata
     builder.create<mlir::func::CallOp>(builder.getUnknownLoc(), funcName, mlir::ValueRange{arg});
+}*/
+
+void MLIRGenVisitor::visit(PrintNode& node) {
+    // 1. Calcola il valore dell'espressione
+    node.expression->accept(*this);
+    mlir::Value arg = lastValue;
+    mlir::Type type = arg.getType();
+    auto loc = builder.getUnknownLoc();   // 🔧 [AGGIUNTO]
+
+    // 2. GESTIONE MEMORIA (MemRef)
+    if (auto memRefType = mlir::dyn_cast<mlir::MemRefType>(type)) {
+
+        // A. STRINGA: passa il puntatore (NO load)
+        if (memRefType.getElementType().isInteger(8) &&
+            memRefType.getRank() > 0) {
+
+            auto dynamicStringType = mlir::MemRefType::get(
+                {mlir::ShapedType::kDynamic},
+                builder.getI8Type()
+            );
+
+            arg = builder.create<mlir::memref::CastOp>(
+                loc, dynamicStringType, arg   // 🔧 usa loc
+            );
+
+            // 🔧 FIX CRITICO: call con argomento
+            builder.create<mlir::func::CallOp>(
+                loc,
+                "print_string",
+                mlir::TypeRange{},            // 🔧 aggiunto
+                mlir::ValueRange{arg}         // 🔧 già corretto
+            );
+            return;
+        }
+
+        // B. SCALARE → load
+        arg = builder.create<mlir::memref::LoadOp>(loc, arg); // 🔧 usa loc
+        type = arg.getType();
+    }
+
+    // 3. SELEZIONE FUNZIONE
+    std::string funcName;
+
+    if (type.isInteger(32)) {
+        funcName = "print_int";
+    }
+    else if (type.isF64()) {
+        funcName = "print_double";
+    }
+    else if (type.isInteger(8)) {
+        funcName = "print_char";
+    }
+    else if (type.isInteger(1)) {
+        arg = builder.create<mlir::arith::ExtUIOp>(
+            loc, builder.getI32Type(), arg   // 🔧 usa loc
+        );
+        funcName = "print_int";
+    }
+    else {
+        std::cerr << "Errore: Tipo non supportato per la print\n";
+        return;
+    }
+
+    // 4. CALL CORRETTA (sempre con argomento)
+    builder.create<mlir::func::CallOp>(
+        loc,
+        funcName,
+        mlir::TypeRange{},                  // 🔧 FIX IMPORTANTE
+        mlir::ValueRange{arg}
+    );
 }
+
+
 void MLIRGenVisitor::visit(FunctionCallNode& node) {
     std::vector<mlir::Value> args;
     for(auto& argExpr : node.arguments) {
@@ -467,8 +605,141 @@ void MLIRGenVisitor::visit(FunctionCallNode& node) {
     }
 }
 
+void MLIRGenVisitor::visit(ReadNode& node) {
+    // 1. read(x) → x deve essere una variabile
+    auto* var = dynamic_cast<VariableNode*>(node.variable.get());
+    if (!var) {
+        std::cerr << "Errore: read() richiede una variabile\n";
+        return;
+    }
+
+    // 2. Recupera info semantica dalla symbol table
+    const auto& varInfo = symTable.lookup(var->name);
+    BasicType varType = varInfo->type;
+
+    // 3. Scegli la funzione runtime in base al tipo
+    std::string fn;
+    switch (varType) {
+        case BasicType::INT:
+            fn = "read_int";
+            break;
+        case BasicType::DOUBLE:
+            fn = "read_double";
+            break;
+        case BasicType::CHAR:
+            fn = "read_char";
+            break;
+        case BasicType::BOOL:
+            // scelta: leggi int e poi converti a bool
+            fn = "read_int";
+            break;
+        default:
+            std::cerr << "Errore: tipo non supportato in read\n";
+            return;
+    }
+
+    // 4. Recupera la funzione runtime
+    auto callee = theModule.lookupSymbol<mlir::func::FuncOp>(fn);
+    if (!callee) {
+        std::cerr << "Errore: funzione runtime '" << fn << "' non trovata\n";
+        return;
+    }
+
+    // 5. Call runtime: () -> T
+    auto call = builder.create<mlir::func::CallOp>(
+        builder.getUnknownLoc(),
+        fn,
+        callee.getResultTypes(),
+        mlir::ValueRange{}
+    );
+
+    mlir::Value value = call.getResult(0);
+
+    // 6. Se BOOL: normalizza a i1 (value != 0)
+    if (varType == BasicType::BOOL) {
+        auto zero = builder.create<mlir::arith::ConstantIntOp>(
+            builder.getUnknownLoc(), 0, 32
+        );
+
+        value = builder.create<mlir::arith::CmpIOp>(
+            builder.getUnknownLoc(),
+            mlir::arith::CmpIPredicate::ne,
+            value,
+            zero
+        ); // i1
+    }
+
+    // 7. Store nella variabile (nel tuo modello: globale)
+    mlir::Value addr = getGlobalAddress(var->name);
+    if (!addr) {
+        std::cerr << "Errore: variabile '" << var->name << "' non trovata\n";
+        return;
+    }
+
+    builder.create<mlir::memref::StoreOp>(
+        builder.getUnknownLoc(),
+        value,
+        addr
+    );
+}
+
+
+void MLIRGenVisitor::visit(StringNode& node) {
+    std::string globalName;
+
+    // 1. String pooling: riusa globale se già esistente
+    auto it = stringPool.find(node.value);
+    if (it != stringPool.end()) {
+        globalName = it->second;
+    } else {
+        globalName = ".str" + std::to_string(stringLiteralCounter++);
+        stringPool[node.value] = globalName;
+
+        // 2. Costruisci stringa con terminatore '\0'
+        std::string s = node.value;
+        s.push_back('\0');
+
+        const int64_t len = static_cast<int64_t>(s.size());
+        auto i8 = builder.getI8Type();
+        auto memrefType = mlir::MemRefType::get({len}, i8);
+
+        // 3. Inizializzatore: DenseElementsAttr
+        llvm::SmallVector<int8_t, 32> bytes;
+        for (unsigned char c : s)
+            bytes.push_back(static_cast<int8_t>(c));
+
+        auto tensorType = mlir::RankedTensorType::get({len}, i8);
+        auto initAttr = mlir::DenseElementsAttr::get(
+            tensorType,
+            llvm::ArrayRef<int8_t>(bytes)
+        );
+
+        // 4. Crea memref.global nel modulo
+        {
+            mlir::OpBuilder::InsertionGuard guard(builder);
+            builder.setInsertionPointToEnd(theModule.getBody());
+
+            builder.create<mlir::memref::GlobalOp>(
+                builder.getUnknownLoc(),
+                globalName,
+                builder.getStringAttr("private"),
+                memrefType,
+                initAttr,
+                /*constant=*/true,
+                /*alignment=*/nullptr
+            );
+        }
+    }
+
+    // 5. get_global → valore della stringa
+    auto global = theModule.lookupSymbol<mlir::memref::GlobalOp>(globalName);
+    lastValue = builder.create<mlir::memref::GetGlobalOp>(
+        builder.getUnknownLoc(),
+        global.getType(),
+        globalName
+    );
+}
+
 // Nodi non usati o vuoti
-void MLIRGenVisitor::visit(ReadNode& node) {}
-void MLIRGenVisitor::visit(StringNode& node) {}
 void MLIRGenVisitor::visit(TypeNode& node) {}
 void MLIRGenVisitor::visit(VoidNode& node) {}

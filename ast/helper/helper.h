@@ -5,7 +5,7 @@
 #ifndef LITTLEBUTTERFLY_COMPILER_HELPER_H
 #define LITTLEBUTTERFLY_COMPILER_HELPER_H
 #include <string>
-#include "../nodes/TypeNode.hpp"
+#include "../nodes/expression/TypeNode.hpp"
 
 
 inline std::string typeToString(BasicType type) {

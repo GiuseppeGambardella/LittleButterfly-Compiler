@@ -4,6 +4,7 @@
 #include "../ast/ast_visitor.hpp"
 #include "../ast/nodes_impl.hpp"
 #include "../ast/helper/helper.h"
+#include "../semantic/SymbolTable.hpp"
 
 // MLIR Includes
 #include "mlir/IR/MLIRContext.h"
@@ -41,8 +42,10 @@ public:
     // Ultimo valore calcolato (registro di passaggio tra nodi)
     mlir::Value lastValue;
 
+    SymbolTable &symTable;
+
     // --- Costruttore ---
-    explicit MLIRGenVisitor(mlir::MLIRContext& ctx);
+    explicit MLIRGenVisitor(mlir::MLIRContext& ctx, SymbolTable& symTable);
 
     // --- Metodi di Utilità ---
 
@@ -98,4 +101,8 @@ private:
     // Recupera l'indirizzo di memoria di una variabile globale.
     // Emette un errore se la variabile non esiste nel modulo.
     mlir::Value getGlobalAddress(const std::string& name);
+
+    //Pool di stringhe per evitare duplicati
+    int stringLiteralCounter = 0;
+    std::unordered_map<std::string, std::string> stringPool;
 };

@@ -1,13 +1,13 @@
 #pragma once
 #include <memory>
-#include "../ast_node.hpp"
-
+#include "../../ast_node.hpp"
 class ASTVisitor; // Forward declaration
 
-class VoidNode : public ASTNode {
+class RealNode : public ASTNode {
     public:
+        double value;
 
-        VoidNode() = default;
+        RealNode(double val) : value(val) {}
 
         void accept(ASTVisitor& visitor) override;
 };

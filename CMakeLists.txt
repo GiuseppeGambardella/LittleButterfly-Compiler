@@ -95,6 +95,8 @@ ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 
 # --- 4.1 Collect Sources ---
 file(GLOB AST_NODES "ast/nodes/*.hpp")
+file(GLOB AST_NODES_EXPR "ast/nodes/expr/*.hpp")
+file(GLOB AST_NODES_STMT "ast/nodes/stmt/*.hpp")
 
 # --- 4.2 Add Executable ---
 add_executable(LittleButterfly_Compiler

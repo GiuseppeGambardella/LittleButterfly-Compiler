@@ -2,7 +2,7 @@
 #include <string>
 #include <unordered_map>
 #include <iostream>
-#include "nodes/TypeNode.hpp"
+#include "../ast/nodes/expression/TypeNode.hpp"
 #include <vector>
 #include "helper/helper.h"
 
