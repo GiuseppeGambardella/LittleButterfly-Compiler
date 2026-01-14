@@ -116,6 +116,8 @@ add_executable(LittleButterfly_Compiler
         semantic/semantic_check_visitor.hpp
         mlir/mlir_gen_visitor.hpp
         mlir/mlir_gen_visitor.cpp
+        mlir/lowering.cpp
+        mlir/lowering.hpp
 )
 
 # =========================================================
@@ -129,16 +131,27 @@ target_include_directories(LittleButterfly_Compiler PRIVATE ${MLIR_INCLUDE_DIRS}
 target_link_libraries(LittleButterfly_Compiler PRIVATE
         MLIRIR
         MLIRSupport
+        MLIRParser
+        MLIRPass
+        MLIRTransforms
+        MLIRRewrite
 
         MLIRFuncDialect
         MLIRArithDialect
         MLIRSCFDialect
         MLIRMemRefDialect
 
+        MLIRLLVMCommonConversion
+        MLIRArithToLLVM
+        MLIRFuncToLLVM
+        MLIRMemRefToLLVM
+        MLIRSCFToControlFlow
+        MLIRReconcileUnrealizedCasts
+        MLIRLLVMIRTransforms
+
+        MLIRTargetLLVMIRExport
+        MLIRTranslateLib
+
         LLVMCore
         LLVMSupport
-
-        MLIRParser
-        MLIRPass
-        MLIRTransforms
 )

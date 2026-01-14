@@ -135,14 +135,20 @@ void MLIRGenVisitor::visit(FunctionDeclNode& node) {
                 auto type = argValue.getType();
                 auto memRefType = mlir::MemRefType::get({}, type);
 
-                mlir::Attribute zeroAttr;
+                /*mlir::Attribute zeroAttr;
                 if (type.isF64()) zeroAttr = builder.getFloatAttr(type, 0.0);
-                else zeroAttr = builder.getIntegerAttr(type, 0);
+                else zeroAttr = builder.getIntegerAttr(type, 0);*/
 
                 builder.create<mlir::memref::GlobalOp>(
-                    builder.getUnknownLoc(), paramName, builder.getStringAttr("private"),
-                    memRefType, zeroAttr, false, nullptr
+                    builder.getUnknownLoc(),
+                    paramName,
+                    builder.getStringAttr("private"),
+                    memRefType,
+                    /*initial_value=*/mlir::Attribute(),
+                    /*constant=*/false,
+                    /*alignment=*/nullptr
                 );
+
             }
         }
 
@@ -191,20 +197,22 @@ void MLIRGenVisitor::visit(VarDeclNode& node) {
     mlir::Type type = getMLIRType(node.type.type);
     auto memRefType = mlir::MemRefType::get({}, type);
 
-    mlir::Attribute initAttr;
+    /*mlir::Attribute initAttr;
     if (type.isF64()) initAttr = builder.getFloatAttr(type, 0.0);
-    else initAttr = builder.getIntegerAttr(type, 0);
+    else initAttr = builder.getIntegerAttr(type, 0);*/
 
     if (!theModule.lookupSymbol<mlir::memref::GlobalOp>(node.name)) {
-        builder.create<mlir::memref::GlobalOp>(
-            builder.getUnknownLoc(),
-            node.name,
-            builder.getStringAttr("private"),
-            memRefType,
-            initAttr,
-            false,
-            nullptr
-        );
+        if (!theModule.lookupSymbol<mlir::memref::GlobalOp>(node.name)) {
+            builder.create<mlir::memref::GlobalOp>(
+                builder.getUnknownLoc(),
+                node.name,
+                builder.getStringAttr("private"),
+                memRefType,
+                /*initial_value=*/mlir::Attribute(),  // unit (assente)
+                /*constant=*/false,
+                /*alignment=*/nullptr
+            );
+        }
     }
 
     // 2. Torna nel contesto locale per l'inizializzazione

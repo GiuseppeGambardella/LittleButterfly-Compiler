@@ -7,6 +7,7 @@
 #include <mlir/Dialect/MemRef/IR/MemRef.h>
 #include <mlir/Dialect/SCF/IR/SCF.h>
 
+#include "lowering.hpp"
 #include "Scanner.hpp" // La tua classe Scanner custom
 #include "parser.hpp"  // Header generato da Bison
 #include "symbol_table_visitor.hpp"
@@ -85,13 +86,30 @@ int main(int argc, char** argv) {
             MLIRGenVisitor mlirGen(context, symTable);
             astRoot->accept(mlirGen);
 
+            mlir::ModuleOp module = mlirGen.theModule;
+
             // Dump MLIR su stdout
             std::cout << "\n===== MLIR DUMP =====\n";
             mlirGen.dump();
             std::cout << "\n=====================\n";
+
+            lowering::registerDialects(context);
+            lowering::lowerToLLVMDialect(module);
+
+            std::cout << "\n===== MLIR LLVM DIALECT =====\n";
+            module.dump();
+            std::cout << "\n============================\n";
+
+            llvm::LLVMContext llvm_context;
+            auto llvmModule = lowering::translateToLLVMIR(module, llvm_context);
+
+            // Dump LLVM IR
+            llvmModule->print(llvm::outs(), nullptr);
         }
         else {
-            cerr << "--- PARSING FAILED! ---" << endl;
+            cerr << "--- PAR"
+                    ""
+                    "SING FAILED! ---" << endl;
             return result;
         }
         //PrintVisitor printer;

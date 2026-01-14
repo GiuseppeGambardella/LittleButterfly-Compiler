@@ -48,7 +48,6 @@ public:
     explicit MLIRGenVisitor(mlir::MLIRContext& ctx, SymbolTable& symTable);
 
     // --- Metodi di Utilità ---
-
     // Stampa il codice MLIR generato su console (stdout)
     void dump();
 
