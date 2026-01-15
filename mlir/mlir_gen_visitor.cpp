@@ -392,28 +392,38 @@ void MLIRGenVisitor::visit(IfNode& node) {
 }
 
 void MLIRGenVisitor::visit(LoopNode& node) {
-    // Gestione LOOP tramite dialetto 'scf' (Structured Control Flow - scf.while)
-    // NOTA: Questo approccio strutturato crea regioni annidate.
+    // Recupera il blocco corrente e la regione
+    mlir::Block* currentBlock = builder.getBlock();
+    mlir::Region* region = currentBlock->getParent();
 
-    auto loc = builder.getUnknownLoc();
-    auto whileOp = builder.create<mlir::scf::WhileOp>(loc, mlir::TypeRange{}, mlir::ValueRange{});
+    // 1. Crea i blocchi per il ciclo: Header (condizione), Body (corpo), Exit (uscita)
+    mlir::Block* headerBlock = builder.createBlock(region);
+    mlir::Block* bodyBlock = builder.createBlock(region);
+    mlir::Block* exitBlock = builder.createBlock(region);
 
-    // Genera blocco 'Before' (Condizione)
-    mlir::Block* beforeBlock = builder.createBlock(&whileOp.getBefore());
-    {
-        node.condition->accept(*this);
-        // scf.condition controlla se continuare il loop
-        builder.create<mlir::scf::ConditionOp>(loc, lastValue, mlir::ValueRange{});
+    // 2. Salta dal blocco corrente all'Header (inizio del ciclo)
+    builder.setInsertionPointToEnd(currentBlock);
+    builder.create<mlir::cf::BranchOp>(builder.getUnknownLoc(), headerBlock);
+
+    // --- HEADER: Valutazione Condizione ---
+    builder.setInsertionPointToStart(headerBlock);
+    node.condition->accept(*this);
+    // Se la condizione è vera vai al Body, se falsa vai all'Exit
+    builder.create<mlir::cf::CondBranchOp>(builder.getUnknownLoc(), lastValue, bodyBlock, exitBlock);
+
+    // --- BODY: Esecuzione Istruzioni ---
+    builder.setInsertionPointToStart(bodyBlock);
+    if (node.body) node.body->accept(*this);
+
+    // 3. Back-edge: Salta indietro all'Header per ripetere il ciclo
+    // IMPORTANTE: Aggiungi il salto solo se il blocco non è già terminato (es. da un return)
+    mlir::Block* bodyEndBlock = builder.getBlock();
+    if (bodyEndBlock->empty() || !bodyEndBlock->back().hasTrait<mlir::OpTrait::IsTerminator>()) {
+        builder.create<mlir::cf::BranchOp>(builder.getUnknownLoc(), headerBlock);
     }
 
-    // Genera blocco 'After' (Corpo del Loop)
-    mlir::Block* afterBlock = builder.createBlock(&whileOp.getAfter());
-    {
-        if (node.body) node.body->accept(*this);
-        // scf.yield torna al blocco Before
-        builder.create<mlir::scf::YieldOp>(loc);
-    }
-    builder.setInsertionPointAfter(whileOp);
+    // 4. Posiziona il builder sull'Exit per continuare con il codice successivo
+    builder.setInsertionPointToStart(exitBlock);
 }
 
 void MLIRGenVisitor::visit(BinaryOpNode& node) {
@@ -490,7 +500,7 @@ void MLIRGenVisitor::visit(BinaryOpNode& node) {
         if(isFloat) lastValue = builder.create<mlir::arith::CmpFOp>(loc, mlir::arith::CmpFPredicate::OEQ, lhs, rhs);
         else lastValue = builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::eq, lhs, rhs);
     }
-    else if (node.op == "!=") {
+    else if (node.op == "<>") {
         if(isFloat) lastValue = builder.create<mlir::arith::CmpFOp>(loc, mlir::arith::CmpFPredicate::ONE, lhs, rhs);
         else lastValue = builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::ne, lhs, rhs);
     }
