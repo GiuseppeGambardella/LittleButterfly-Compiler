@@ -55,9 +55,10 @@ fly() {
     whifilefe a > 5 thefen {
         ifif a==1 and false thefen {
             flyout("Condizione di AND soddisfatta");
+            a = 3;
         } efelsefe {
             flyout("Condizione di AND non soddisfatta");
+            a = 1;
         }
     }
-
 }
