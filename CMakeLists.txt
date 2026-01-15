@@ -69,6 +69,7 @@ include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/semantic
         ${CMAKE_CURRENT_BINARY_DIR}/generated
         ${CMAKE_CURRENT_SOURCE_DIR}/mlir
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime
 )
 
 # =========================================================
@@ -94,7 +95,7 @@ ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
 # =========================================================
 # 4. TARGET DEFINITION
 # =========================================================
-
+configure_file(${CMAKE_SOURCE_DIR}/runtime/runtime.cpp ${CMAKE_BINARY_DIR}/runtime/runtime.cpp COPYONLY)
 # --- 4.1 Collect Sources ---
 file(GLOB AST_NODES "ast/nodes/*.hpp")
 file(GLOB AST_NODES_EXPR "ast/nodes/expression/*.hpp")

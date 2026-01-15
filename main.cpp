@@ -28,6 +28,9 @@ int main(int argc, char** argv) {
     ifstream file;
     istream* input = &cin; // Di default leggiamo da tastiera
 
+    // Vettore per salvare le righe del codice (per i messaggi di errore)
+    std::vector<std::string> sourceLines;
+
     if (argc > 1) {
         // Se c'è un argomento, proviamo ad aprire il file
         file.open(argv[1]);
@@ -46,7 +49,7 @@ int main(int argc, char** argv) {
 
     // 3. CREAZIONE DEL PARSER
     // Il parser prende il nostro scanner come riferimento (vedi %param nel parser.y)
-    yy::yyParser parser(scanner, astRoot);
+    yy::yyParser parser(scanner, astRoot,sourceLines);
 
     cout << "--- START... ---" << endl;
 
@@ -58,20 +61,26 @@ int main(int argc, char** argv) {
         if (result == 0) {
             cout << "--- PARSING COMPLETED! ---" << endl;
             SymbolTable symTable;
-            SymbolTableVisitor builder(symTable);
+            SymbolTableVisitor builder(symTable, sourceLines);
             astRoot->accept(builder);
 
             if (!builder.getErrors().empty()) {
                 for (auto& e : builder.getErrors())
-                    std::cerr << "Semantic error: " << e << "\n";
+                    std::cerr << e ;
                 return 1;
             }
             // Debug
             //symTable.printTable();
 
-            SemanticCheckVisitor typeChecker(symTable);
+            SemanticCheckVisitor typeChecker(symTable, sourceLines);
             astRoot->accept(typeChecker);
+
+            // --- CORREZIONE QUI ---
             if (!typeChecker.getErrors().empty()) {
+                // Dobbiamo STAMPARE gli errori prima di uscire!
+                for (const auto& err : typeChecker.getErrors()) {
+                    std::cerr << err;
+                }
                 return 1;
             }
             cout << "--- SEMANTIC CHECK COMPLETED! ---" << endl;
