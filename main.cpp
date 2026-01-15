@@ -6,6 +6,7 @@
 #include <mlir/Dialect/Arith/IR/Arith.h>
 #include <mlir/Dialect/MemRef/IR/MemRef.h>
 #include <mlir/Dialect/SCF/IR/SCF.h>
+#include <mlir/Dialect/ControlFlow/IR/ControlFlowOps.h>
 
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/raw_ostream.h>
@@ -95,6 +96,7 @@ int main(int argc, char** argv) {
             context.getOrLoadDialect<mlir::arith::ArithDialect>();
             context.getOrLoadDialect<mlir::memref::MemRefDialect>();
             context.getOrLoadDialect<mlir::scf::SCFDialect>();
+            context.getOrLoadDialect<mlir::cf::ControlFlowDialect>();
 
             MLIRGenVisitor mlirGen(context, symTable);
             astRoot->accept(mlirGen);

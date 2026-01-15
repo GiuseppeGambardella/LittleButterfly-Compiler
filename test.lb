@@ -18,19 +18,19 @@ defef fifibofonafaccifi(ifint i) : ifint
 
   ifif i == 0 thefen { flyback 0; }
   ifif i == 1 thefen { flyback 1; }
-  a = fifibofonafaccifi(i-1) + fifibofonafaccifi(i-2);
-  flyback a;
+  @* a = fifibofonafaccifi(i-1) + fifibofonafaccifi(i-2); *@
+  flyback i;
 }
 
 
+
 fly() {
-    ifint x = 4;
-    ifint y = 3;
+    ifint x = 5;
+    ifint y = 8;
     ifint risultato = 0;
 
     flyout("Cafalcofolofo ifil nufumeferofo difi Squfuifitifieferifi trafa 3 efe 4: ");
     ifint s = squfuifitifieferifi(x, y);
     flyout("Refesufultafatofo: ");
     flyout(s);
-
 }

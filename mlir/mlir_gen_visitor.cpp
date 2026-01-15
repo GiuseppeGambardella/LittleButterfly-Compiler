@@ -40,7 +40,7 @@ void MLIRGenVisitor::declareRuntimeFunctions() {
         auto func = builder.create<mlir::func::FuncOp>(loc, name, type);
         func.setPrivate();
         func->remove();
-        mlirSymTable.insert(func); // <--- REGISTRAZIONE ESPLICITA
+        mlirSymTable.insert(func);
     };
 
     declare("print_int", builder.getFunctionType({i32}, {}));
@@ -76,7 +76,7 @@ mlir::Type MLIRGenVisitor::getMLIRType(BasicType type) {
 // ==========================================================
 
 void MLIRGenVisitor::initializeGlobalsFromSymbolTable() {
-    // Scorriamo la TUA tabella
+    // Scorriamo la tabella
     for (const auto& pair : symTable.getTable()) {
         const std::string& name = pair.first;
         const SymbolInfo& info = pair.second;
@@ -103,8 +103,7 @@ void MLIRGenVisitor::initializeGlobalsFromSymbolTable() {
             );
 
             globalOp->remove();
-            // 2. INSERISCI ESPLICITAMENTE NELLA MLIR SYMBOL TABLE
-            // Questo aggiorna le mappe interne di MLIR per lookup O(1)
+            // 2. INSERIRE ESPLICITAMENTE NELLA MLIR SYMBOL TABLE
             mlirSymTable.insert(globalOp);
         }
     }
@@ -139,42 +138,98 @@ mlir::Value MLIRGenVisitor::getGlobalAddress(const std::string& name) {
 // ==========================================================
 
 void MLIRGenVisitor::visit(ProgramNode& node) {
-    // Tutto già inizializzato nel costruttore.
-    for (auto& decl : node.globals) decl->accept(*this);
+    // -------------------------------------------------------------
+    // PASSO 1: Dichiara TUTTI i prototipi (Globals + Fly)
+    // -------------------------------------------------------------
+
+    // A. Funzioni normali (in globals)
+    for (auto& decl : node.globals) {
+        if (auto funcDecl = dynamic_cast<FunctionDeclNode*>(decl.get())) {
+
+            llvm::SmallVector<mlir::Type, 4> argTypes;
+            for (auto& param : funcDecl->parameters) {
+                if (auto varDecl = dynamic_cast<VarDeclNode*>(param.get())) {
+                    argTypes.push_back(getMLIRType(varDecl->type.type));
+                }
+            }
+
+            llvm::SmallVector<mlir::Type, 1> resultTypes;
+            if (auto retNode = dynamic_cast<TypeNode*>(funcDecl->returnType.get())) {
+                if (retNode->type != BasicType::VOID) {
+                    resultTypes.push_back(getMLIRType(retNode->type));
+                }
+            }
+
+            auto funcType = builder.getFunctionType(argTypes, resultTypes);
+            auto func = builder.create<mlir::func::FuncOp>(builder.getUnknownLoc(), funcDecl->name, funcType);
+
+            func->remove();
+            mlirSymTable.insert(func);
+        }
+    }
+
+    // B. Funzione FLY (MainBlock)
+    if (node.mainBlock) {
+        // Fly solitamente è una FunctionDeclNode speciale
+        if (auto flyDecl = dynamic_cast<FunctionDeclNode*>(node.mainBlock.get())) {
+
+            // Fly non ha argomenti
+            llvm::SmallVector<mlir::Type, 4> argTypes;
+            for (auto& param : flyDecl->parameters) {
+                if (auto varDecl = dynamic_cast<VarDeclNode*>(param.get())) {
+                    argTypes.push_back(getMLIRType(varDecl->type.type));
+                }
+            }
+
+            // Fly solitamente è void
+            llvm::SmallVector<mlir::Type, 1> resultTypes;
+            if (auto retNode = dynamic_cast<TypeNode*>(flyDecl->returnType.get())) {
+                if (retNode->type != BasicType::VOID) {
+                    resultTypes.push_back(getMLIRType(retNode->type));
+                }
+            }
+
+            auto funcType = builder.getFunctionType(argTypes, resultTypes);
+            // Usiamo flyDecl->name che dovrebbe essere "fly"
+            auto func = builder.create<mlir::func::FuncOp>(builder.getUnknownLoc(), flyDecl->name, funcType);
+
+            func->remove();
+            mlirSymTable.insert(func);
+        }
+    }
+
+    // -------------------------------------------------------------
+    // PASSO 2: Genera i corpi
+    // -------------------------------------------------------------
+    for (auto& decl : node.globals) {
+        decl->accept(*this);
+    }
+
     if (node.mainBlock) node.mainBlock->accept(*this);
 }
 
 void MLIRGenVisitor::visit(FunctionDeclNode& node) {
-    llvm::SmallVector<mlir::Type, 4> argTypes;
-    std::vector<std::string> argNames;
+    // 1. RECUPERA la funzione (ora anche 'fly' sarà trovata qui!)
+    auto op = mlirSymTable.lookup(node.name);
+    auto func = llvm::dyn_cast_or_null<mlir::func::FuncOp>(op);
 
+    if (!func) {
+        std::cerr << "ERRORE INTERNO: Funzione '" << node.name << "' persa.\n";
+        return;
+    }
+
+    std::vector<std::string> argNames;
     for (auto& param : node.parameters) {
         if (auto varDecl = dynamic_cast<VarDeclNode*>(param.get())) {
-            argTypes.push_back(getMLIRType(varDecl->type.type));
             argNames.push_back(varDecl->name);
         }
     }
 
-    llvm::SmallVector<mlir::Type, 1> resultTypes;
-    if (auto retNode = dynamic_cast<TypeNode*>(node.returnType.get())) {
-        if (retNode->type != BasicType::VOID) {
-            resultTypes.push_back(getMLIRType(retNode->type));
-        }
-    }
-
-    auto funcType = builder.getFunctionType(argTypes, resultTypes);
-
-    // Creiamo la funzione
-    auto func = builder.create<mlir::func::FuncOp>(builder.getUnknownLoc(), node.name, funcType);
-
-    func->remove();
-    // IMPORTANTE: Registriamo anche la funzione nella SymbolTable MLIR!
-    mlirSymTable.insert(func);
+    if (!func.getBlocks().empty()) return;
 
     mlir::Block* entryBlock = func.addEntryBlock();
     builder.setInsertionPointToStart(entryBlock);
 
-    // Store parametri nelle globali (lookup veloce)
     for (size_t i = 0; i < argNames.size(); ++i) {
         mlir::Value argValue = entryBlock->getArgument(i);
         mlir::Value globalPtr = getGlobalAddress(argNames[i]);
@@ -186,15 +241,15 @@ void MLIRGenVisitor::visit(FunctionDeclNode& node) {
     if (node.body) node.body->accept(*this);
 
     bool hasTerminator = !entryBlock->empty() && entryBlock->back().hasTrait<mlir::OpTrait::IsTerminator>();
+
     if (!hasTerminator) {
+        auto resultTypes = func.getFunctionType().getResults();
         if (!resultTypes.empty()) {
              auto t = resultTypes[0];
-            mlir::Attribute z;
-            if (t.isF64()) {
-                z = builder.getFloatAttr(t, 0.0);
-            } else {
-                z = builder.getIntegerAttr(t, 0);
-            }
+             mlir::Attribute z;
+             if (t.isF64()) z = builder.getFloatAttr(t, 0.0);
+             else z = builder.getIntegerAttr(t, 0);
+
              auto c = builder.create<mlir::arith::ConstantOp>(builder.getUnknownLoc(), t, llvm::cast<mlir::TypedAttr>(z));
              builder.create<mlir::func::ReturnOp>(builder.getUnknownLoc(), mlir::ValueRange{c});
         } else {
@@ -202,6 +257,10 @@ void MLIRGenVisitor::visit(FunctionDeclNode& node) {
         }
     }
 }
+
+// ==========================================================
+// ALTRI VISITOR (Standard)
+// ==========================================================
 
 void MLIRGenVisitor::visit(VarDeclNode& node) {
     if (node.initializer) {
@@ -240,11 +299,53 @@ void MLIRGenVisitor::visit(ReturnNode& node) {
 }
 
 void MLIRGenVisitor::visit(IfNode& node) {
+    // 1. Valuta la condizione
     node.condition->accept(*this);
     mlir::Value cond = lastValue;
-    auto ifOp = builder.create<mlir::scf::IfOp>(builder.getUnknownLoc(), cond, (node.elseBranch != nullptr));
-    { auto g = mlir::OpBuilder::InsertionGuard(builder); builder.setInsertionPointToStart(&ifOp.getThenRegion().front()); if (node.thenBranch) node.thenBranch->accept(*this); }
-    if (node.elseBranch) { auto g = mlir::OpBuilder::InsertionGuard(builder); builder.setInsertionPointToStart(&ifOp.getElseRegion().front()); node.elseBranch->accept(*this); }
+
+    // Ottieni il blocco corrente e la regione della funzione
+    mlir::Block* currentBlock = builder.getBlock();
+    mlir::Region* region = currentBlock->getParent();
+
+    // 2. Crea i nuovi blocchi per il Then, Else (opzionale) e Merge (uscita)
+    mlir::Block* thenBlock = builder.createBlock(region);
+    mlir::Block* elseBlock = nullptr;
+    if (node.elseBranch) {
+        elseBlock = builder.createBlock(region);
+    }
+    // Il blocco di continuazione (dove si uniscono i flussi)
+    mlir::Block* mergeBlock = builder.createBlock(region);
+
+    // 3. Crea il salto condizionale (CondBranch) dal blocco originale
+    builder.setInsertionPointToEnd(currentBlock);
+    if (elseBlock) {
+        builder.create<mlir::cf::CondBranchOp>(builder.getUnknownLoc(), cond, thenBlock, elseBlock);
+    } else {
+        // Se non c'è else, salta al merge se la condizione è falsa
+        builder.create<mlir::cf::CondBranchOp>(builder.getUnknownLoc(), cond, thenBlock, mergeBlock);
+    }
+
+    // --- GENERAZIONE RAMO THEN ---
+    builder.setInsertionPointToStart(thenBlock);
+    node.thenBranch->accept(*this);
+
+    // Se il blocco non termina già con un return (o altro terminatore), salta al merge
+    if (thenBlock->empty() || !thenBlock->back().hasTrait<mlir::OpTrait::IsTerminator>()) {
+        builder.create<mlir::cf::BranchOp>(builder.getUnknownLoc(), mergeBlock);
+    }
+
+    // --- GENERAZIONE RAMO ELSE ---
+    if (elseBlock) {
+        builder.setInsertionPointToStart(elseBlock);
+        node.elseBranch->accept(*this);
+
+        if (elseBlock->empty() || !elseBlock->back().hasTrait<mlir::OpTrait::IsTerminator>()) {
+            builder.create<mlir::cf::BranchOp>(builder.getUnknownLoc(), mergeBlock);
+        }
+    }
+
+    // 4. Riposizionati sul blocco Merge per continuare a generare il resto del codice
+    builder.setInsertionPointToStart(mergeBlock);
 }
 
 void MLIRGenVisitor::visit(LoopNode& node) {
@@ -261,23 +362,106 @@ void MLIRGenVisitor::visit(BinaryOpNode& node) {
     node.left->accept(*this); mlir::Value lhs = lastValue;
     node.right->accept(*this); mlir::Value rhs = lastValue;
     auto loc = builder.getUnknownLoc();
+    auto lhsType = lhs.getType();
 
-    // ... copia la logica BinaryOp (and/or/concat/math) ...
-    // Per brevità non la ripeto tutta qui, ma è identica a prima.
-    // Se ti serve, fammelo sapere.
+    if (node.op == "and" || node.op == "or") {
+        if (!lhsType.isInteger(1)) {
+            auto zero = builder.create<mlir::arith::ConstantIntOp>(loc, 0, 32);
+            lhs = builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::ne, lhs, zero);
+        }
+        auto rhsType = rhs.getType();
+        if (!rhsType.isInteger(1)) {
+            auto zero = builder.create<mlir::arith::ConstantIntOp>(loc, 0, 32);
+            rhs = builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::ne, rhs, zero);
+        }
+        if (node.op == "and") lastValue = builder.create<mlir::arith::AndIOp>(loc, lhs, rhs);
+        else lastValue = builder.create<mlir::arith::OrIOp>(loc, lhs, rhs);
+        return;
+    }
 
-    bool isFloat = lhs.getType().isF64();
+    if (node.op == "&") {
+        auto convertToString = [&](mlir::Value v, mlir::Type t) -> mlir::Value {
+            std::string fnName;
+            if (t.isInteger(32)) fnName = "to_string_int";
+            else if (t.isInteger(1)) fnName = "to_string_bool";
+            else if (t.isF64()) fnName = "to_string_double";
+            else if (t.isInteger(8)) fnName = "to_string_char";
+            else if (auto memTy = llvm::dyn_cast<mlir::MemRefType>(t)) {
+                if (memTy.getElementType().isInteger(8)) {
+                    auto dynStrType = mlir::MemRefType::get({mlir::ShapedType::kDynamic}, builder.getI8Type());
+                    if (memTy != dynStrType) v = builder.create<mlir::memref::CastOp>(loc, dynStrType, v);
+                    fnName = "to_string_string";
+                } else return nullptr;
+            } else return nullptr;
+
+            auto op = mlirSymTable.lookup(fnName);
+            auto callee = llvm::dyn_cast<mlir::func::FuncOp>(op);
+            if (!callee) return nullptr;
+            return builder.create<mlir::func::CallOp>(loc, callee, mlir::ValueRange{v}).getResult(0);
+        };
+
+        mlir::Value lhsStr = convertToString(lhs, lhs.getType());
+        mlir::Value rhsStr = convertToString(rhs, rhs.getType());
+
+        if (lhsStr && rhsStr) {
+            auto op = mlirSymTable.lookup("concat_strings");
+            auto concatFn = llvm::dyn_cast<mlir::func::FuncOp>(op);
+            if (concatFn) {
+                lastValue = builder.create<mlir::func::CallOp>(loc, concatFn, mlir::ValueRange{lhsStr, rhsStr}).getResult(0);
+            }
+        }
+        return;
+    }
+
+    bool isFloat = lhsType.isF64();
     if(node.op=="+") lastValue = isFloat ? builder.create<mlir::arith::AddFOp>(loc,lhs,rhs).getResult() : builder.create<mlir::arith::AddIOp>(loc,lhs,rhs).getResult();
     else if(node.op=="-") lastValue = isFloat ? builder.create<mlir::arith::SubFOp>(loc,lhs,rhs).getResult() : builder.create<mlir::arith::SubIOp>(loc,lhs,rhs).getResult();
-    // ... eccetera ...
+    else if(node.op=="*") lastValue = isFloat ? builder.create<mlir::arith::MulFOp>(loc,lhs,rhs).getResult() : builder.create<mlir::arith::MulIOp>(loc,lhs,rhs).getResult();
+    else if(node.op=="/") lastValue = isFloat ? builder.create<mlir::arith::DivFOp>(loc,lhs,rhs).getResult() : builder.create<mlir::arith::DivSIOp>(loc,lhs,rhs).getResult();
+    else if (node.op == "==") {
+        if(isFloat) lastValue = builder.create<mlir::arith::CmpFOp>(loc, mlir::arith::CmpFPredicate::OEQ, lhs, rhs);
+        else lastValue = builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::eq, lhs, rhs);
+    }
+    else if (node.op == "!=") {
+        if(isFloat) lastValue = builder.create<mlir::arith::CmpFOp>(loc, mlir::arith::CmpFPredicate::ONE, lhs, rhs);
+        else lastValue = builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::ne, lhs, rhs);
+    }
+    else if (node.op == "<") {
+        if(isFloat) lastValue = builder.create<mlir::arith::CmpFOp>(loc, mlir::arith::CmpFPredicate::OLT, lhs, rhs);
+        else lastValue = builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::slt, lhs, rhs);
+    }
+    else if (node.op == ">") {
+        if(isFloat) lastValue = builder.create<mlir::arith::CmpFOp>(loc, mlir::arith::CmpFPredicate::OGT, lhs, rhs);
+        else lastValue = builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::sgt, lhs, rhs);
+    }
+    else if (node.op == "<=") {
+        if(isFloat) lastValue = builder.create<mlir::arith::CmpFOp>(loc, mlir::arith::CmpFPredicate::OLE, lhs, rhs);
+        else lastValue = builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::sle, lhs, rhs);
+    }
+    else if (node.op == ">=") {
+        if(isFloat) lastValue = builder.create<mlir::arith::CmpFOp>(loc, mlir::arith::CmpFPredicate::OGE, lhs, rhs);
+        else lastValue = builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::sge, lhs, rhs);
+    }
 }
 
 void MLIRGenVisitor::visit(UnaryOpNode& node) {
     node.operand->accept(*this);
-    // ... copia logica UnaryOp ...
+    auto val = lastValue;
+    auto loc = builder.getUnknownLoc();
+    if (node.op == "-") {
+        if (val.getType().isF64()) {
+            auto zero = builder.create<mlir::arith::ConstantOp>(loc, builder.getF64Type(), builder.getFloatAttr(builder.getF64Type(), 0.0));
+            lastValue = builder.create<mlir::arith::SubFOp>(loc, zero, val);
+        } else {
+            auto zero = builder.create<mlir::arith::ConstantOp>(loc, val.getType(), builder.getIntegerAttr(val.getType(), 0));
+            lastValue = builder.create<mlir::arith::SubIOp>(loc, zero, val);
+        }
+    } else if (node.op == "!") {
+        auto one = builder.create<mlir::arith::ConstantOp>(loc, builder.getI1Type(), builder.getIntegerAttr(builder.getI1Type(), 1));
+        lastValue = builder.create<mlir::arith::XOrIOp>(loc, val, one);
+    }
 }
 
-// Literals
 void MLIRGenVisitor::visit(NumberNode& node) { lastValue = builder.create<mlir::arith::ConstantIntOp>(builder.getUnknownLoc(), node.value, 32); }
 void MLIRGenVisitor::visit(RealNode& node) { lastValue = builder.create<mlir::arith::ConstantOp>(builder.getUnknownLoc(), builder.getF64Type(), builder.getFloatAttr(builder.getF64Type(), node.value)); }
 void MLIRGenVisitor::visit(BooleanNode& node) { lastValue = builder.create<mlir::arith::ConstantIntOp>(builder.getUnknownLoc(), node.value, 1); }
@@ -291,10 +475,8 @@ void MLIRGenVisitor::visit(ReadNode& node) {
     if(info->type == BasicType::DOUBLE) fn = "read_double";
     else if(info->type == BasicType::CHAR) fn = "read_char";
 
-    // Usa mlirSymTable per trovare la funzione
     auto op = mlirSymTable.lookup(fn);
     auto callee = llvm::dyn_cast<mlir::func::FuncOp>(op);
-
     auto call = builder.create<mlir::func::CallOp>(builder.getUnknownLoc(), callee, mlir::ValueRange{});
     mlir::Value val = call.getResult(0);
 
@@ -311,7 +493,6 @@ void MLIRGenVisitor::visit(FunctionCallNode& node) {
     std::vector<mlir::Value> args;
     for(auto& a : node.arguments) { a->accept(*this); args.push_back(lastValue); }
 
-    // Lookup veloce funzione
     auto op = mlirSymTable.lookup(node.functionName);
     auto callee = llvm::dyn_cast<mlir::func::FuncOp>(op);
 
@@ -321,22 +502,37 @@ void MLIRGenVisitor::visit(FunctionCallNode& node) {
 
 void MLIRGenVisitor::visit(PrintNode& node) {
     node.expression->accept(*this);
-    // ... Logica Print standard (identica a prima) ...
-    // Ricordati di usare mlirSymTable.lookup("print_...") se vuoi,
-    // oppure lasciare le stringhe "print_int" che CallOp risolve da sola se il simbolo è nel modulo.
-    // CallOp con stringa usa internamente il lookup.
+    mlir::Value arg = lastValue;
+    mlir::Type type = arg.getType();
+    auto loc = builder.getUnknownLoc();
+
+    if (auto memRefType = mlir::dyn_cast<mlir::MemRefType>(type)) {
+        if (memRefType.getElementType().isInteger(8) && memRefType.getRank() > 0) {
+            auto dynamicStringType = mlir::MemRefType::get({mlir::ShapedType::kDynamic}, builder.getI8Type());
+            arg = builder.create<mlir::memref::CastOp>(loc, dynamicStringType, arg);
+            builder.create<mlir::func::CallOp>(loc, "print_string", mlir::TypeRange{}, mlir::ValueRange{arg});
+            return;
+        }
+        arg = builder.create<mlir::memref::LoadOp>(loc, arg);
+        type = arg.getType();
+    }
+
+    std::string funcName = "print_int";
+    if (type.isF64()) funcName = "print_double";
+    else if (type.isInteger(8)) funcName = "print_char";
+    else if (type.isInteger(1)) {
+        arg = builder.create<mlir::arith::ExtUIOp>(loc, builder.getI32Type(), arg);
+    }
+    builder.create<mlir::func::CallOp>(loc, funcName, mlir::TypeRange{}, mlir::ValueRange{arg});
 }
 
 void MLIRGenVisitor::visit(StringNode& node) {
-    // Le stringhe sono un caso speciale, usiamo ancora stringPool per i letterali
-    // Ma usiamo mlirSymTable per registrare la globale creata
     std::string globalName;
     if (stringPool.find(node.value) != stringPool.end()) {
         globalName = stringPool[node.value];
     } else {
         globalName = ".str" + std::to_string(stringLiteralCounter++);
         stringPool[node.value] = globalName;
-        // ... crea global ...
         std::string s = node.value; s.push_back(0);
         auto i8 = builder.getI8Type();
         auto tensorType = mlir::RankedTensorType::get({(int64_t)s.size()}, i8);
@@ -346,9 +542,8 @@ void MLIRGenVisitor::visit(StringNode& node) {
         auto g = builder.create<mlir::memref::GlobalOp>(builder.getUnknownLoc(), globalName, builder.getStringAttr("private"), mlir::MemRefType::get({(int64_t)s.size()}, i8), initAttr, true, nullptr);
 
         g->remove();
-        mlirSymTable.insert(g); // REGISTER!
+        mlirSymTable.insert(g);
     }
-
     lastValue = getGlobalAddress(globalName);
 }
 
@@ -359,7 +554,7 @@ void MLIRGenVisitor::emitMainWrapper() {
     auto loc = builder.getUnknownLoc();
     auto mainFunc = builder.create<mlir::func::FuncOp>(loc, "main", builder.getFunctionType({}, builder.getI32Type()));
     mainFunc->remove();
-    mlirSymTable.insert(mainFunc); // Register main
+    mlirSymTable.insert(mainFunc);
 
     builder.setInsertionPointToStart(mainFunc.addEntryBlock());
 
