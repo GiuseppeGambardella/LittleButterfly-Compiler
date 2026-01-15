@@ -53,7 +53,6 @@ yyParser::location_type loc;
   loc.step();
 %}
 
-"fly"               { TOKEN_MAIN }
 "defef"             { TOKEN_FUNC }
 "flyback"           { TOKEN_RETURN }
 "flyout"            { TOKEN_PRINT }
@@ -76,6 +75,7 @@ yyParser::location_type loc;
 "<="                { TOKEN_LE }
 "or"                { TOKEN_OR }
 "and"               { TOKEN_AND }
+"fly"               { TOKEN_MAIN }
 
 [+\-*/=><!\&]       { return yyParser::symbol_type(yytext[0], loc); }
 [(){};,:]           { return yyParser::symbol_type(yytext[0], loc); }

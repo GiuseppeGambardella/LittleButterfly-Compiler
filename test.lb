@@ -1,36 +1,63 @@
-@* Primo Test LittleButterfly *@
+@* Test avanzato LittleButterfly *@
 
-defef squfuifitifieferifi(ifint a, ifint b) : ifint {
-  ifint c = fifibofonafaccifi(a);
-  ifint d = fifibofonafaccifi(b);
-  ifif a > b thefen {
-    flyback d - c;
-  } efelsefe {
-    flyback c - d;
-  }
+defef calcolofumolefi(ifint x, ifint y) : ifint {
+    ifint result = 0;
+
+    ifif x == y thefen {
+        flyback x * y;  @* Moltiplicazione *@
+    } efelsefe {
+        ifif x < y thefen {
+            result = 1;
+        } efelsefe {
+            ifif x > y thefen {
+                result = fifibofonafaccifi(x-1);  @* Altra funzione chiamata *@
+            } efelsefe {
+                result = x + y;  @* Somma semplice *@
+            }
+        }
+    }
+
+    flyback result;
 }
 
-defef fifibofonafaccifi(ifint i) : ifint
-{
-  ifif i < 0 thefen {
-    flyback -1;
-  }
-
-  ifif i == 0 thefen { flyback 0; }
-  ifif i == 1 thefen { flyback 1; }
-  @* a = fifibofonafaccifi(i-1) + fifibofonafaccifi(i-2); *@
-  flyback i;
+defef fifibofonafaccifi(ifint i) : ifint {
+    ifif i <= 0 thefen {
+        flyback 0;
+    } efelsefe {
+        flyback i * 2;
+    }
 }
 
-
-
+@* Test con variabili complesse e uso di funzioni all'interno di altre funzioni *@
 fly() {
-    ifint x = 5;
-    ifint y = 8;
+    ifint a = 10;
+    ifint b = 20;
     ifint risultato = 0;
 
-    flyout("Cafalcofolofo ifil nufumeferofo difi Squfuifitifieferifi trafa 3 efe 4: ");
-    ifint s = squfuifitifieferifi(x, y);
-    flyout("Refesufultafatofo: ");
-    flyout(s);
+    flyout("Inizio del calcolo: ");
+    risultato = calcolofumolefi(a, b);  @* Chiamata a funzione complessa *@
+    flyout("Risultato finale: ");
+    flyout(risultato);
+
+    @* Chiamata con valori complessi e utilizzo di altre funzioni nel corpo *@
+    ifint c = fifibofonafaccifi(3);
+    ifint d = -c;
+    flyout("Nuovo risultato dopo funzioni: " & d);
+
+    @* Caso con condizione irregolare: verifica con un caso bizzarro
+    ifif a * b == 200 thefen {
+        flyback a * b;
+    } efelsefe {
+        flyback a + b;
+    } *@
+
+    @* Possibile errore con l'operatore AND, precedenza degli operatori, e condizioni di loop *@
+    whifilefe a > 5 thefen {
+        ifif a==1 and false thefen {
+            flyout("Condizione di AND soddisfatta");
+        } efelsefe {
+            flyout("Condizione di AND non soddisfatta");
+        }
+    }
+
 }
