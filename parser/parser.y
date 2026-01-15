@@ -297,6 +297,7 @@ expression:
     | expression AND expression { $$ = make_node<BinaryOpNode>("AND", std::move($1), std::move($3)); $$->line = @$.begin.line; }
     | expression OR expression  { $$ = make_node<BinaryOpNode>("OR",  std::move($1), std::move($3)); $$->line = @$.begin.line; }
     | '!' expression            { $$ = make_node<UnaryOpNode>("!", std::move($2)); $$->line = @$.begin.line; }
+    | '-' expression            { $$ = make_node<UnaryOpNode>("-", std::move($2)); $$->line = @$.begin.line; }
     ;
 
 %%

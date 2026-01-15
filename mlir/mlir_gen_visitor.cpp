@@ -383,65 +383,63 @@ void MLIRGenVisitor::visit(BinaryOpNode& node) {
     }
 
     // --------------------------------------------------
-        // 0. CONCATENAZIONE STRINGHE (&)
-        // --------------------------------------------------
-        if (node.op == "&") {
-            // Valuta LHS
-            node.left->accept(*this);
-            mlir::Value lhs = lastValue;
-            mlir::Type lhsType = lhs.getType();
+    // 0. CONCATENAZIONE STRINGHE (&)
+    // --------------------------------------------------
+    if (node.op == "&") {
+        // Nota: lhs e rhs sono già stati popolati all'inizio della visit
+        auto loc = builder.getUnknownLoc();
 
-            // Valuta RHS
-            node.right->accept(*this);
-            mlir::Value rhs = lastValue;
-            mlir::Type rhsType = rhs.getType();
+        // Helper: converte Value → stringa (i8 memref dinamico)
+        auto convertToString = [&](mlir::Value v, mlir::Type t) -> mlir::Value {
+            std::string fnName;
 
-            auto loc = builder.getUnknownLoc();
+            if (t.isInteger(32)) fnName = "to_string_int";
+            else if (t.isInteger(1)) fnName = "to_string_bool";
+            else if (t.isF64()) fnName = "to_string_double";
+            else if (t.isInteger(8)) fnName = "to_string_char";
+            else if (auto memTy = llvm::dyn_cast<mlir::MemRefType>(t)) {
+                    if (memTy.getElementType().isInteger(8)) {
+                        auto dynStrType = mlir::MemRefType::get({mlir::ShapedType::kDynamic}, builder.getI8Type());
 
-            auto stringType = mlir::MemRefType::get(
-                {mlir::ShapedType::kDynamic},
-                builder.getI8Type()
-            );
+                        // Anche qui, meglio controllare se il cast è necessario
+                        if (memTy != dynStrType) {
+                            v = builder.create<mlir::memref::CastOp>(loc, dynStrType, v);
+                        }
+                        fnName = "to_string_string";
+                    } else {
+                        std::cerr << "Errore: MemRef non i8 non supportato\n";
+                        return nullptr;
+                    }
+                }else {
+                std::cerr << "Errore: Tipo non convertibile a stringa\n";
+                return nullptr;
+            }
 
-            // Helper: converte Value → stringa
-            auto toString = [&](mlir::Value v, mlir::Type t) -> mlir::Value {
-                std::string fn;
+            // Verifica esistenza funzione nel modulo
+            auto callee = theModule.lookupSymbol<mlir::func::FuncOp>(fnName);
+            if (!callee) {
+                std::cerr << "Errore: Funzione di runtime '" << fnName << "' non definita nel modulo\n";
+                return nullptr;
+            }
 
-                if (t.isInteger(32)) fn = "to_string_int";
-                else if (t.isInteger(1)) fn = "to_string_bool";
-                else if (t.isF64()) fn = "to_string_double";
-                else if (t.isInteger(8)) fn = "to_string_char";
-                else if (mlir::isa<mlir::MemRefType>(t)) fn = "to_string_string";
-                else {
-                    std::cerr << "Errore: tipo non convertibile a stringa\n";
-                    return nullptr;
-                }
+            auto call = builder.create<mlir::func::CallOp>(loc, callee, mlir::ValueRange{v});
+            return call.getResult(0);
+        };
 
-                auto callee = theModule.lookupSymbol<mlir::func::FuncOp>(fn);
-                auto call = builder.create<mlir::func::CallOp>(
-                    loc,
-                    fn,
-                    callee.getResultTypes(),
-                    mlir::ValueRange{v}
-                );
+        mlir::Value lhsStr = convertToString(lhs, lhsType);
+        mlir::Value rhsStr = convertToString(rhs, rhsType);
 
-                return call.getResult(0);
-            };
+        if (!lhsStr || !rhsStr) return; // Gestione errore
 
-            mlir::Value lhsStr = toString(lhs, lhsType);
-            mlir::Value rhsStr = toString(rhs, rhsType);
-
-            auto concatFn = theModule.lookupSymbol<mlir::func::FuncOp>("concat_strings");
-            auto concatCall = builder.create<mlir::func::CallOp>(
-                loc,
-                "concat_strings",
-                concatFn.getResultTypes(),
-                mlir::ValueRange{lhsStr, rhsStr}
-            );
-
-            lastValue = concatCall.getResult(0);
+        auto concatFn = theModule.lookupSymbol<mlir::func::FuncOp>("concat_strings");
+        if (!concatFn) {
+            std::cerr << "Errore: Funzione 'concat_strings' non trovata\n";
             return;
         }
+
+        lastValue = builder.create<mlir::func::CallOp>(loc, concatFn, mlir::ValueRange{lhsStr, rhsStr}).getResult(0);
+        return;
+    }
 
 
 

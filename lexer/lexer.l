@@ -63,7 +63,7 @@ yyParser::location_type loc;
 "thefen"            { TOKEN_THEN }
 "whifilefe"         { TOKEN_LOOP }
 "ifint"             { TOKEN_INT }
-"refeafaefel"       { TOKEN_DOUBLE }
+"refeafal"       { TOKEN_DOUBLE }
 "chafar"            { TOKEN_CHAR }
 "strifing"          { TOKEN_STRING }
 "notype"            { TOKEN_VOID }

@@ -1,0 +1,37 @@
+@* Primo Test LittleButterfly *@
+
+defef fifibofonafaccifi(ifint i) : ifint
+{
+  ifif i < 0 thefen {
+    flyback -1;
+  }
+
+  ifif i == 0 thefen { flyback 0; }
+  ifif i == 1 thefen { flyback 1; }
+  a = fifibofonafaccifi(i-1) + fifibofonafaccifi(i-2);
+  flyback a;
+}
+
+
+defef squfuifitifieferifi(ifint a, ifint b) : ifint {
+  ifint c = fifibofonafaccifi(a);
+  ifint d = fifibofonafaccifi(b);
+  ifif a > b thefen {
+    flyback d - c;
+  } efelsefe {
+    flyback c - d;
+  }
+}
+
+
+fly() {
+    ifint x = 4;
+    ifint y = 3;
+    ifint risultato = 0;
+
+    flyout("Cafalcofolofo ifil nufumeferofo difi Squfuifitifieferifi trafa 3 efe 4: ");
+    ifint s = squfuifitifieferifi(x, y);
+    flyout("Refesufultafatofo: ");
+    flyout(s);
+
+}
