@@ -59,6 +59,7 @@ void MLIRGenVisitor::declareRuntimeFunctions() {
     declare("read_int", builder.getFunctionType({}, {i32}));
     declare("read_double", builder.getFunctionType({}, {f64}));
     declare("read_char", builder.getFunctionType({}, {i8}));
+    declare("read_string", builder.getFunctionType({}, {stringType}));
 
     // --- Conversione e Stringhe ---
     declare("to_string_int", builder.getFunctionType({i32}, {stringType}));
@@ -76,6 +77,11 @@ mlir::Type MLIRGenVisitor::getMLIRType(BasicType type) {
         case BasicType::DOUBLE: return builder.getF64Type();
         case BasicType::BOOL: return builder.getI1Type();
         case BasicType::CHAR: return builder.getI8Type();
+        case BasicType::STRING:
+            return mlir::MemRefType::get(
+                {mlir::ShapedType::kDynamic},
+                builder.getI8Type()
+            );
         case BasicType::VOID: return builder.getNoneType();
         default: return builder.getI32Type();
     }
@@ -97,6 +103,10 @@ void MLIRGenVisitor::initializeGlobalsFromSymbolTable() {
             // Se esiste già nella tabella MLIR, saltiamo per evitare duplicati.
             if (mlirSymTable.lookup(name)) continue;
 
+
+            if (info.type == BasicType::STRING) {
+                continue; // le stringhe globali sono gestite come literal nel codice
+            }
             mlir::Type type = getMLIRType(info.type);
             // Creiamo un MemRef (Memory Reference) scalare (rank vuoto {}) per la variabile.
             auto memRefType = mlir::MemRefType::get({}, type);
@@ -112,6 +122,7 @@ void MLIRGenVisitor::initializeGlobalsFromSymbolTable() {
                 false,
                 nullptr
             );
+
 
             globalOp->remove();
             // 2. INSERIRE ESPLICITAMENTE NELLA MLIR SYMBOL TABLE
@@ -255,11 +266,25 @@ void MLIRGenVisitor::visit(FunctionDeclNode& node) {
     // così possono essere modificati all'interno della funzione.
     for (size_t i = 0; i < argNames.size(); ++i) {
         mlir::Value argValue = entryBlock->getArgument(i);
-        mlir::Value globalPtr = getGlobalAddress(argNames[i]);
-        if (globalPtr) {
-            builder.create<mlir::memref::StoreOp>(builder.getUnknownLoc(), argValue, globalPtr);
+        const auto* info = symTable.lookup(argNames[i]);
+        if (!info) continue;
+
+        if (info->type == BasicType::STRING) {
+            // binding del parametro stringa
+            stringEnv[argNames[i]] = argValue;
+            continue;
         }
+
+        // solo per scalari
+        mlir::Value globalPtr = getGlobalAddress(argNames[i]);
+        if (!globalPtr) continue;
+
+        builder.create<mlir::memref::StoreOp>(
+            builder.getUnknownLoc(), argValue, globalPtr
+        );
+
     }
+
 
     // Genera il codice del corpo della funzione
     if (node.body) node.body->accept(*this);
@@ -293,20 +318,42 @@ void MLIRGenVisitor::visit(FunctionDeclNode& node) {
 // ==========================================================
 
 void MLIRGenVisitor::visit(VarDeclNode& node) {
-    // Gestione dichiarazione variabile con inizializzazione
-    if (node.initializer) {
-        node.initializer->accept(*this); // Calcola il valore iniziale
-        mlir::Value globalPtr = getGlobalAddress(node.name);
-        if (globalPtr) {
-            // Scrive (Store) il valore nella memoria della variabile globale
-            builder.create<mlir::memref::StoreOp>(builder.getUnknownLoc(), lastValue, globalPtr);
-        }
+    if (!node.initializer) return;
+
+    node.initializer->accept(*this);
+    const auto* info = symTable.lookup(node.name);
+    if (!info) return;
+
+    if (info->type == BasicType::STRING) {
+        stringEnv[node.name] = lastValue;
+        return;
     }
+
+    mlir::Value globalPtr = getGlobalAddress(node.name);
+    if (!globalPtr) return;
+
+    builder.create<mlir::memref::StoreOp>(
+        builder.getUnknownLoc(), lastValue, globalPtr
+    );
+
 }
 
 void MLIRGenVisitor::visit(VariableNode& node) {
     // Uso di una variabile in una espressione: Legge (Load) il valore dalla memoria
+
+    const auto info = symTable.lookup(node.name);
+    if (info->type == BasicType::STRING) {
+        auto it = stringEnv.find(node.name);
+        if (it == stringEnv.end()) {
+            std::cerr << "ERRORE: stringa '" << node.name << "' non inizializzata\n";
+        } else {
+            lastValue = it->second;
+        }
+        return;
+    }
+
     mlir::Value address = getGlobalAddress(node.name);
+
     if (address) {
         lastValue = builder.create<mlir::memref::LoadOp>(builder.getUnknownLoc(), address);
     } else {
@@ -318,12 +365,22 @@ void MLIRGenVisitor::visit(VariableNode& node) {
 }
 
 void MLIRGenVisitor::visit(AssignmentNode& node) {
-    // Assegnamento: calcola valore -> scrivi in memoria
     node.value->accept(*this);
-    mlir::Value address = getGlobalAddress(node.variableName);
-    if (address) {
-        builder.create<mlir::memref::StoreOp>(builder.getUnknownLoc(), lastValue, address);
+    const auto* info = symTable.lookup(node.variableName);
+    if (!info) return;
+
+    if (info->type == BasicType::STRING) {
+        stringEnv[node.variableName] = lastValue;
+        return;
     }
+
+    mlir::Value address = getGlobalAddress(node.variableName);
+    if (!address) return;
+
+    builder.create<mlir::memref::StoreOp>(
+        builder.getUnknownLoc(), lastValue, address
+    );
+
 }
 
 void MLIRGenVisitor::visit(BlockNode& node) {
@@ -557,6 +614,7 @@ void MLIRGenVisitor::visit(ReadNode& node) {
     std::string fn = "read_int";
     if(info->type == BasicType::DOUBLE) fn = "read_double";
     else if(info->type == BasicType::CHAR) fn = "read_char";
+    else if (info->type == BasicType::STRING) fn = "read_string";
 
     auto op = mlirSymTable.lookup(fn);
     auto callee = llvm::dyn_cast<mlir::func::FuncOp>(op);
@@ -569,9 +627,19 @@ void MLIRGenVisitor::visit(ReadNode& node) {
          val = builder.create<mlir::arith::CmpIOp>(builder.getUnknownLoc(), mlir::arith::CmpIPredicate::ne, val, zero);
     }
 
+    if (info->type == BasicType::STRING) {
+        stringEnv[var->name] = val; // <-- salva la stringa letta
+        return;
+    }
+
     // Salva il valore letto nella variabile
     mlir::Value addr = getGlobalAddress(var->name);
-    builder.create<mlir::memref::StoreOp>(builder.getUnknownLoc(), val, addr);
+    if (!addr) return;
+
+    builder.create<mlir::memref::StoreOp>(
+        builder.getUnknownLoc(), val, addr
+    );
+
 }
 
 void MLIRGenVisitor::visit(FunctionCallNode& node) {

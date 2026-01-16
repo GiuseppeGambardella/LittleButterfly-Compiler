@@ -63,6 +63,8 @@ private:
     int stringLiteralCounter = 0;
     std::unordered_map<std::string, std::string> stringPool;
 
+    std::unordered_map<std::string, mlir::Value> stringEnv;
+
     // Helper interni
     void initializeGlobalsFromSymbolTable();
     mlir::Value getGlobalAddress(const std::string& name);
