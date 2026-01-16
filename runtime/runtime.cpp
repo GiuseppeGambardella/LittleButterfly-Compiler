@@ -86,6 +86,27 @@ extern "C" {
         return (int8_t)x;
     }
 
+    MemRef1D read_string() {
+        // Legge una linea intera (fino a newline)
+        char buffer[1024];
+
+        if (!std::fgets(buffer, sizeof(buffer), stdin)) {
+            // EOF o errore → stringa vuota
+            char* heap = _strdup("");
+            return makeMemRefFromOwnedCString(heap);
+        }
+
+        // Rimuove newline finale se presente
+        size_t len = std::strlen(buffer);
+        if (len > 0 && buffer[len - 1] == '\n') {
+            buffer[len - 1] = '\0';
+        }
+
+        char* heap = _strdup(buffer);
+        return makeMemRefFromOwnedCString(heap);
+    }
+
+
     // =========================
     // TO_STRING: ritornano MemRef1D (struct)
     // IR: {ptr, ptr, i64, [1 x i64], [1 x i64]}
