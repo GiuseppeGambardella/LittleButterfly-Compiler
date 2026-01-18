@@ -1,64 +1,10 @@
-@* Test avanzato LittleButterfly *@
+fly(){
+    strifing test= "pisello";
+    flyout("Inserire una parola simpatica:");
+    flyin(test);
 
-defef calcolofumolefi(ifint x, ifint y) : ifint {
-    ifint result = 0;
-
-    ifif x == y thefen {
-        flyback x * y;  @* Moltiplicazione *@
-    } efelsefe {
-        ifif x < y thefen {
-            result = 1;
-        } efelsefe {
-            ifif x > y thefen {
-                result = fifibofonafaccifi(x-1);  @* Altra funzione chiamata *@
-            } efelsefe {
-                result = x + y;  @* Somma semplice *@
-            }
-        }
-    }
-
-    flyback result;
-}
-
-defef fifibofonafaccifi(ifint i) : ifint {
-    ifif i <= 0 thefen {
-        flyback 0;
-    } efelsefe {
-        flyback i * 2;
-    }
-}
-
-@* Test con variabili complesse e uso di funzioni all'interno di altre funzioni *@
-fly() {
-    ifint a = 10;
-    ifint b = 20;
-    ifint risultato = 0;
-
-    flyout("Inizio del calcolo: ");
-    risultato = calcolofumolefi(a, b);  @* Chiamata a funzione complessa *@
-    flyout("Risultato finale: ");
-    flyout(risultato);
-
-    @* Chiamata con valori complessi e utilizzo di altre funzioni nel corpo *@
-    ifint c = fifibofonafaccifi(3);
-    ifint d = -c;
-    flyout("Nuovo risultato dopo funzioni: " & d);
-
-    @* Caso con condizione irregolare: verifica con un caso bizzarro
-    ifif a * b == 200 thefen {
-        flyback a * b;
-    } efelsefe {
-        flyback a + b;
-    } *@
-
-    @* Possibile errore con l'operatore AND, precedenza degli operatori, e condizioni di loop *@
-    whifilefe a > 5 thefen {
-        ifif a==1 and false thefen {
-            flyout("Condizione di AND soddisfatta");
-            a = 3;
-        } efelsefe {
-            flyout("Condizione di AND non soddisfatta");
-            a = 1;
-        }
-    }
+    strifing compose = "Dio " & test;
+    
+    flyout(compose);
+    flyout("Marco ma che dici!");
 }

@@ -37,7 +37,6 @@ void lowering::registerDialects(mlir::MLIRContext &context) {
     context.appendDialectRegistry(registry);
     context.loadAllAvailableDialects();
 
-    // ✅ QUESTE, NON QUELLE CON DialectRegistry
     mlir::registerBuiltinDialectTranslation(context);
     mlir::registerLLVMDialectTranslation(context);
 }
@@ -52,7 +51,7 @@ void lowering::lowerToLLVMDialect(mlir::ModuleOp module) {
     pm.enableVerifier(true);
 
     // ───────────────────────
-    // 1️⃣ Ottimizzazioni MLIR
+    // 1️⃣ Optimization MLIR
     // ───────────────────────
     pm.addPass(mlir::createCanonicalizerPass());
     pm.addPass(mlir::createCSEPass());
@@ -67,7 +66,7 @@ void lowering::lowerToLLVMDialect(mlir::ModuleOp module) {
    pm.addPass(mlir::createArithToLLVMConversionPass());
 
     // ───────────────────────
-    // 3️⃣ TUTTO → LLVM
+    // 3️⃣ ALL → LLVM
     // ───────────────────────
     pm.addPass(mlir::createArithToLLVMConversionPass());
     pm.addPass(mlir::createFinalizeMemRefToLLVMConversionPass());
@@ -76,7 +75,7 @@ void lowering::lowerToLLVMDialect(mlir::ModuleOp module) {
     pm.addPass(mlir::createConvertControlFlowToLLVMPass());
 
     // ───────────────────────
-    // 4️⃣ Cleanup finale
+    // 4️⃣ Cleanup
     // ───────────────────────
     pm.addPass(mlir::createReconcileUnrealizedCastsPass());
 

@@ -7,7 +7,7 @@
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinOps.h"
-#include "mlir/IR/SymbolTable.h" // <--- FONDAMENTALE
+#include "mlir/IR/SymbolTable.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"
 #include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/Dialect/SCF/IR/SCF.h"
@@ -22,16 +22,16 @@ public:
     mlir::MLIRContext& context;
     mlir::OpBuilder builder;
 
-    // Ordine importante: il modulo deve essere creato prima della symbol table che lo gestisce
+    // module must be created first, before symbol table
     mlir::ModuleOp theModule;
     mlir::SymbolTable mlirSymTable;
 
     mlir::Value lastValue;
-    SymbolTable& symTable; // La tua tabella semantica
+    SymbolTable& symTable; // semantic symbol table reference
 
     MLIRGenVisitor(mlir::MLIRContext& ctx, SymbolTable& symTable);
 
-    // ... (Tutti i visit rimangono uguali) ...
+
     void visit(ProgramNode& node) override;
     void visit(FunctionDeclNode& node) override;
     void visit(BlockNode& node) override;
@@ -65,7 +65,7 @@ private:
 
     std::unordered_map<std::string, mlir::Value> stringEnv;
 
-    // Helper interni
+    // Helpers
     void initializeGlobalsFromSymbolTable();
     mlir::Value getGlobalAddress(const std::string& name);
 };

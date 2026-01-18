@@ -11,7 +11,7 @@
 
 namespace lowering {
 
-    /// Registra tutti i dialect necessari per il lowering
+    /// Register all custom dialects used in the project
     void registerDialects(mlir::MLIRContext &context);
 
     /// Lowering:

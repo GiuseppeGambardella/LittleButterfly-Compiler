@@ -124,6 +124,7 @@ add_executable(LittleButterfly_Compiler
         mlir/lowering.hpp
         mlir/lowering.cpp
         runtime/runtime.cpp
+        ast/symbol_table_visitor.cpp
 )
 
 # =========================================================
