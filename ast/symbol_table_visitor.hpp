@@ -24,16 +24,16 @@ public:
     // --- ENTRY POINT ---
     void visit(ProgramNode &node) override;
 
-    // --- DEFINIZIONE VARIABILI ---
+    // --- Variable definition ---
     void visit(VarDeclNode &node) override;
 
-    // --- UTILIZZO VARIABILI (Controllo esistenza) ---
+    // --- variable use (existence control) ---
     void visit(VariableNode &node) override;
 
     void visit(AssignmentNode &node) override;
     void visit(ReadNode &node) override;
 
-    // --- ALTRI VISITOR (Passanti) ---
+    // --- Other visitors (passing)---
     void visit(FunctionCallNode &node) override;
     void visit(BlockNode &node) override;
     void visit(IfNode &node) override;

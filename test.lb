@@ -7,4 +7,7 @@ fly(){
     
     flyout(compose);
     flyout("Marco ma che dici!");
+
+    ifint a = ?16;
+    flyout("Il valore di a generato casualmente e': " & a);
 }

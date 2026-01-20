@@ -77,7 +77,7 @@ yyParser::location_type loc;
 "and"               { TOKEN_AND }
 "fly"               { TOKEN_MAIN }
 
-[+\-*/=><!\&]       { return yyParser::symbol_type(yytext[0], loc); }
+[+\-*/=><!\&?]       { return yyParser::symbol_type(yytext[0], loc); }
 [(){};,:]           { return yyParser::symbol_type(yytext[0], loc); }
 
 [0-9]+"."[0-9]+     { return yyParser::make_CONST_DOUBLE(std::stod(yytext), loc); }

@@ -116,6 +116,11 @@ public:
             }
             return;
         }
+        if (node.op == "?") {
+            if (currentType != BasicType::INT) {
+                error("Operator '?' applied to non-integer type: " + typeToString(currentType), node.line);
+            }
+        }
     }
 
     void visit(BinaryOpNode &node) override {

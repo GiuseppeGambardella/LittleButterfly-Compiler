@@ -49,6 +49,8 @@ void MLIRGenVisitor::declareRuntimeFunctions() {
         mlirSymTable.insert(func);
     };
 
+    declare("random", builder.getFunctionType({i32}, {i32}));
+
     // --- Output ---
     declare("print_int", builder.getFunctionType({i32}, {}));
     declare("print_double", builder.getFunctionType({f64}, {}));
@@ -597,6 +599,13 @@ void MLIRGenVisitor::visit(UnaryOpNode& node) {
         // Not logico: XOR con 1
         auto one = builder.create<mlir::arith::ConstantOp>(loc, builder.getI1Type(), builder.getIntegerAttr(builder.getI1Type(), 1));
         lastValue = builder.create<mlir::arith::XOrIOp>(loc, val, one);
+    }
+    else if (node.op == "?") {
+        // call to random function
+        auto op = mlirSymTable.lookup("random");
+        auto callee = llvm::dyn_cast<mlir::func::FuncOp>(op);
+        auto call = builder.create<mlir::func::CallOp>(loc, callee, mlir::ValueRange{val});
+        lastValue = call.getResult(0);
     }
 }
 

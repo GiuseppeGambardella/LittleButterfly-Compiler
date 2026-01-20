@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 
 // Memref 1D descriptor: memref<?xi8>
 // LLVM lo passa come 5 argomenti: (allocated, aligned, offset, size0, stride0)
@@ -37,6 +38,17 @@ extern "C" {
     void print_int(int32_t n) {
         std::printf("%d\n", n);
         std::fflush(stdout);
+    }
+
+    int32_t random(int32_t max) {
+        if (max <= 0) return 0;
+        static bool seeded = false;
+        if (!seeded) {
+            std::srand(static_cast<unsigned int>(std::time(nullptr)));
+            seeded = true;
+        }
+
+        return std::rand() % (max + 1);
     }
 
     void print_double(double d) {
