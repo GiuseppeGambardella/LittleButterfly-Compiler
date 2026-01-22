@@ -194,4 +194,19 @@ extern "C" {
 
         return makeMemRefFromOwnedCString(r);
     }
+
+    int8_t strcmp_strings(
+        char* a_alloc, char* a_align, int64_t a_off, int64_t a_size, int64_t a_stride,
+        char* b_alloc, char* b_align, int64_t b_off, int64_t b_size, int64_t b_stride
+    ) {
+        (void)a_alloc; (void)a_size; (void)b_alloc; (void)b_size;
+
+        char* a = a_align ? (a_align + a_off * a_stride) : (char*)"";
+        char* b = b_align ? (b_align + b_off * b_stride) : (char*)"";
+
+        int cmp = std::strcmp(a, b);
+        if (cmp < 0) return -1;
+        if (cmp > 0) return 1;
+        return 0;
+    }
 }

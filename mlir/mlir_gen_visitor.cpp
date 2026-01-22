@@ -70,6 +70,7 @@ void MLIRGenVisitor::declareRuntimeFunctions() {
     declare("to_string_char", builder.getFunctionType({i8}, {stringType}));
     declare("to_string_string", builder.getFunctionType({stringType}, {stringType}));
     declare("concat_strings", builder.getFunctionType({stringType, stringType}, {stringType}));
+    declare("strcmp_strings", builder.getFunctionType({stringType, stringType}, {i32}));
 }
 
 // Helper per convertire i tipi del tuo linguaggio (BasicType) nei tipi di MLIR.
@@ -492,6 +493,59 @@ void MLIRGenVisitor::visit(BinaryOpNode& node) {
     auto loc = builder.getUnknownLoc();
     auto lhsType = lhs.getType();
 
+    auto lhsMem = llvm::dyn_cast<mlir::MemRefType>(lhs.getType());
+    auto rhsMem = llvm::dyn_cast<mlir::MemRefType>(rhs.getType());
+    bool isStringCmp =
+        lhsMem && rhsMem &&
+        lhsMem.getElementType().isInteger(8) &&
+        rhsMem.getElementType().isInteger(8);
+
+    if (isStringCmp && (node.op == "==" || node.op == "<>" ||
+    node.op == "<"  || node.op == ">"  ||
+    node.op == "<=" || node.op == ">=")) {
+        auto op = mlirSymTable.lookup("strcmp_strings");
+        auto strcmpFn = llvm::dyn_cast<mlir::func::FuncOp>(op);
+        if (!strcmpFn) {
+            std::cerr << "ERRORE: strcmp_strings non trovata\n";
+            return;
+        }
+
+        // call strcmp_strings(lhs, rhs)
+        auto call = builder.create<mlir::func::CallOp>(
+            loc, strcmpFn, mlir::ValueRange{lhs, rhs}
+        );
+
+        mlir::Value cmp = call.getResult(0); // i32
+        auto zero = builder.create<mlir::arith::ConstantIntOp>(loc, 0, 32);
+
+        if (node.op == "==") {
+            lastValue = builder.create<mlir::arith::CmpIOp>(
+                loc, mlir::arith::CmpIPredicate::eq, cmp, zero);
+        }
+        else if (node.op == "<>") {
+            lastValue = builder.create<mlir::arith::CmpIOp>(
+                loc, mlir::arith::CmpIPredicate::ne, cmp, zero);
+        }
+        else if (node.op == "<") {
+            lastValue = builder.create<mlir::arith::CmpIOp>(
+                loc, mlir::arith::CmpIPredicate::slt, cmp, zero);
+        }
+        else if (node.op == ">") {
+            lastValue = builder.create<mlir::arith::CmpIOp>(
+                loc, mlir::arith::CmpIPredicate::sgt, cmp, zero);
+        }
+        else if (node.op == "<=") {
+            lastValue = builder.create<mlir::arith::CmpIOp>(
+                loc, mlir::arith::CmpIPredicate::sle, cmp, zero);
+        }
+        else if (node.op == ">=") {
+            lastValue = builder.create<mlir::arith::CmpIOp>(
+                loc, mlir::arith::CmpIPredicate::sge, cmp, zero);
+        }
+
+        return;
+    }
+
     // Gestione operatori logici (AND / OR)
     // Converte eventuali i32 (0/1) in i1 (bool) per le operazioni logiche
     if (node.op == "and" || node.op == "or") {
@@ -556,6 +610,7 @@ void MLIRGenVisitor::visit(BinaryOpNode& node) {
     else if(node.op=="/") lastValue = isFloat ? builder.create<mlir::arith::DivFOp>(loc,lhs,rhs).getResult() : builder.create<mlir::arith::DivSIOp>(loc,lhs,rhs).getResult();
     // Confronti
     else if (node.op == "==") {
+
         if(isFloat) lastValue = builder.create<mlir::arith::CmpFOp>(loc, mlir::arith::CmpFPredicate::OEQ, lhs, rhs);
         else lastValue = builder.create<mlir::arith::CmpIOp>(loc, mlir::arith::CmpIPredicate::eq, lhs, rhs);
     }
