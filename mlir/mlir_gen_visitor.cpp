@@ -771,7 +771,11 @@ void MLIRGenVisitor::visit(StringNode& node) {
         g->remove();
         mlirSymTable.insert(g);
     }
-    lastValue = getGlobalAddress(globalName);
+    mlir::Value staticPtr = getGlobalAddress(globalName);
+
+    // Cast "alla radice": trasformiamo subito la stringa statica in dinamica (memref<?xi8>)
+    auto dynamicStrType = mlir::MemRefType::get({mlir::ShapedType::kDynamic}, builder.getI8Type());
+    lastValue = builder.create<mlir::memref::CastOp>(builder.getUnknownLoc(), dynamicStrType, staticPtr);
 }
 
 void MLIRGenVisitor::visit(TypeNode&) {}
