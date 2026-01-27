@@ -53,7 +53,6 @@ yyParser::location_type loc;
   loc.step();
 %}
 
-"fly"               { TOKEN_MAIN }
 "defef"             { TOKEN_FUNC }
 "flyback"           { TOKEN_RETURN }
 "flyout"            { TOKEN_PRINT }
@@ -63,7 +62,7 @@ yyParser::location_type loc;
 "thefen"            { TOKEN_THEN }
 "whifilefe"         { TOKEN_LOOP }
 "ifint"             { TOKEN_INT }
-"refeafaefel"       { TOKEN_DOUBLE }
+"refeafal"       { TOKEN_DOUBLE }
 "chafar"            { TOKEN_CHAR }
 "strifing"          { TOKEN_STRING }
 "notype"            { TOKEN_VOID }
@@ -76,8 +75,9 @@ yyParser::location_type loc;
 "<="                { TOKEN_LE }
 "or"                { TOKEN_OR }
 "and"               { TOKEN_AND }
+"fly"               { TOKEN_MAIN }
 
-[+\-*/=><!\&]       { return yyParser::symbol_type(yytext[0], loc); }
+[+\-*/=><!\&?]       { return yyParser::symbol_type(yytext[0], loc); }
 [(){};,:]           { return yyParser::symbol_type(yytext[0], loc); }
 
 [0-9]+"."[0-9]+     { return yyParser::make_CONST_DOUBLE(std::stod(yytext), loc); }

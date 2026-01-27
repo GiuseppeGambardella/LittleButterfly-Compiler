@@ -1,0 +1,37 @@
+defef func_log(ifint n, ifint base): ifint{
+	ifint log=1;
+	ifint potenza=base;
+	ifif (n<=base) thefen {
+		flyback 0;
+	}
+	whifilefe(potenza<n) thefen {
+		potenza = potenza*base;
+		log = log+1;
+	}
+	flyback log;
+}
+
+fly(){
+    strifing test= "pisello";
+    flyout("Inserire una parola simpatica:");
+    flyin(test);
+
+    strifing compose = "Dio " & test;
+    
+    flyout(compose);
+    flyout("Marco ma che dici!");
+
+    ifif compose == "Dio pisello" thefen {
+        flyout("Hai inserito la parola segreta!");
+    } efelsefe {
+        flyout("Parola sbagliata!");
+    }
+
+    ifif compose <> "Dio pisello" thefen {
+        flyout("Confermo, parola sbagliata!");
+    }
+
+    ifint a = ?16;
+    flyout("Il valore di a generato casualmente e': " & a);
+    flyout ("Il negro jimmy sborra bianco: " & func_log(a, 3));
+}

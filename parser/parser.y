@@ -3,6 +3,8 @@
 %defines
 %locations
 
+%define parse.error verbose
+
 %define api.token.constructor
 %define api.value.type variant
 %define parse.assert
@@ -18,7 +20,7 @@
     #include <memory>
 
     // Includiamo TypeNode per passarlo per valore
-    #include "ast/nodes/TypeNode.hpp"
+    #include "ast/nodes/expression/TypeNode.hpp"
 
     // Forward declaration del nostro Scanner custom
     namespace yy { class Scanner; }
@@ -29,11 +31,14 @@
 // Passiamo il nostro Scanner come riferimento al parser
 %param { yy::Scanner& scanner }
 %parse-param { std::unique_ptr<ASTNode>& astRoot }
+%parse-param { const std::vector<std::string>& sourceLines }
 
 %code {
     #include "Scanner.hpp" // Include la definizione completa della classe Scanner
     #include "ast/nodes_impl.hpp"
     #include "ast/ast_factory.hpp"
+
+    #include <iomanip>
 
     // Funzione bridge che Bison chiama: prende il nostro scanner e chiama lex()
     static yy::yyParser::symbol_type yylex(yy::Scanner& scanner) {
@@ -184,7 +189,7 @@ instruction:
         $$->line = @$.begin.line;
     }
     | RETURN ';'               {
-        $$ = make_node<ReturnNode>(nullptr);
+        $$ = make_node<ReturnNode>(make_node<VoidNode>());
         $$->line = @$.begin.line;
     }
     | if_command               { $$ = std::move($1); }
@@ -297,11 +302,41 @@ expression:
     | expression AND expression { $$ = make_node<BinaryOpNode>("AND", std::move($1), std::move($3)); $$->line = @$.begin.line; }
     | expression OR expression  { $$ = make_node<BinaryOpNode>("OR",  std::move($1), std::move($3)); $$->line = @$.begin.line; }
     | '!' expression            { $$ = make_node<UnaryOpNode>("!", std::move($2)); $$->line = @$.begin.line; }
+    | '-' expression            { $$ = make_node<UnaryOpNode>("-", std::move($2)); $$->line = @$.begin.line; }
+    | '?' expression            { $$ = make_node<UnaryOpNode>("?", std::move($2)); $$->line = @$.begin.line; }
     ;
 
 %%
 
-// La firma di error ora prende location_type
+/* --- AGGIUNTA 3: Funzione Error Migliorata --- */
 void yy::yyParser::error(const location_type& loc, const std::string& msg) {
-    cerr << ">>> SYNTAX ERROR " << loc << ": " << msg << endl;
+    // Intestazione errore
+    cerr << "\n>> SYNTAX ERROR at line " << loc.begin.line
+         << ", column " << loc.begin.column << ": " << msg << endl;
+
+    // Recupera la riga del codice sorgente (se disponibile)
+    // loc.begin.line parte da 1, il vettore da 0
+    int lineIndex = loc.begin.line - 1;
+
+    if (lineIndex >= 0 && lineIndex < (int)sourceLines.size()) {
+        const std::string& line = sourceLines[lineIndex];
+
+        // Stampa il numero di riga e il codice
+        cerr << "    " << std::setw(4) << loc.begin.line << " | " << line << endl;
+
+        // Stampa il puntatore '^' sotto l'errore
+        cerr << "         | ";
+
+        // Stampa spazi fino alla colonna dell'errore
+        // Nota: loc.begin.column parte da 1
+        for(int i = 1; i < loc.begin.column; ++i) {
+            cerr << " ";
+        }
+        cerr << "\033[1;33m^\033[0m" << endl; // ^ giallo
+
+        // Suggerimento (opzionale)
+        cerr << "         \033[1;33mHere\033[0m\n" << endl;
+    } else {
+        cerr << "(Source line not available)" << endl;
+    }
 }

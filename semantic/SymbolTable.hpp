@@ -2,7 +2,7 @@
 #include <string>
 #include <unordered_map>
 #include <iostream>
-#include "nodes/TypeNode.hpp"
+#include "../ast/nodes/expression/TypeNode.hpp"
 #include <vector>
 #include "helper/helper.h"
 
@@ -18,6 +18,11 @@ private:
     std::unordered_map<std::string, SymbolInfo> table;
 
 public:
+
+    const std::unordered_map<std::string, SymbolInfo>& getTable() const {
+        return table;
+    }
+
     // Tenta di definire un nuovo simbolo. Ritorna false se esiste già.
     bool define(const std::string& name, const SymbolInfo& info) {
         if (table.find(name) != table.end()) {
