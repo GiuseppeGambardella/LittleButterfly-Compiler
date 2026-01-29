@@ -9,6 +9,10 @@
 #include "llvm/IR/Module.h"
 #include "mlir/IR/BuiltinOps.h"
 
+/// Namespace for MLIR lowering functions
+/// It includes functions to register dialects,
+/// lower to LLVM dialect, and translate to LLVM IR
+
 namespace lowering {
 
     /// Register all custom dialects used in the project

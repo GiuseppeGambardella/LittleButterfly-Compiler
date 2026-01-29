@@ -5,16 +5,17 @@
 #include <FlexLexer.h>
 #endif
 
-#include "parser.hpp" // Generato da Bison, contiene yyParser::symbol_type
+#include "parser.hpp" // File genereted by Bison, contains yyParser::symbol_type
 
 namespace yy {
     class Scanner : public yyFlexLexer {
     public:
-        // Costruttore che accetta lo stream di input (file o cin)
+        // Constructor that accepts the input stream (file or cin)
         Scanner(std::istream *in) : yyFlexLexer(in) {}
 
-        // Nascondiamo il metodo yylex() originale che ritorna int
-        // e ne definiamo uno nuovo che ritorna symbol_type
+        // Hiding the original yylex() method that returns int
+        // and defining a new one that returns symbol_type
+        // This is the method that Bison will call to get tokens
         using FlexLexer::yylex;
         virtual yy::yyParser::symbol_type lex();
     };
