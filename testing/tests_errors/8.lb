@@ -1,0 +1,7 @@
+defef procedura() : notype {
+    flyback 10; @* Errore: funzione void non puo' ritornare valori *@
+}
+
+fly() {
+    procedura();
+}

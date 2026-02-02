@@ -164,3 +164,8 @@ target_link_libraries(LittleButterfly_Compiler PRIVATE
         LLVMCore
         LLVMSupport
 )
+
+# =========================================================
+# 6. TEST SUITE
+# =========================================================
+add_executable(TestRunner testing/test.cpp)
