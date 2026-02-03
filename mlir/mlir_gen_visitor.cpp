@@ -392,8 +392,11 @@ void MLIRGenVisitor::visit(BlockNode& node) {
 }
 
 void MLIRGenVisitor::visit(ReturnNode& node) {
+
+    bool hasReturnValue = node.value && !dynamic_cast<VoidNode*>(node.value.get());
+
     // Genera l'istruzione di ritorno dalla funzione (func.return)
-    if (node.value) {
+    if (hasReturnValue) {
         node.value->accept(*this);
         builder.create<mlir::func::ReturnOp>(builder.getUnknownLoc(), lastValue);
     }
