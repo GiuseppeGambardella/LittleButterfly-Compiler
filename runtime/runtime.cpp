@@ -192,7 +192,7 @@ extern "C" {
 
     // =========================
     // STRCMP STRINGS
-    // sig. IR: strcmp_strings(5 args for a, 5 args for b) -> i8
+    // sig. IR: strcmp_strings(5 args for a, 5 args for b) -> i32
     // =========================
     int32_t strcmp_strings(
         char* a_alloc, char* a_align, int64_t a_off, int64_t a_size, int64_t a_stride,
