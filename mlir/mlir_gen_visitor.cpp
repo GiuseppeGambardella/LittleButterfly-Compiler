@@ -368,7 +368,7 @@ void MLIRGenVisitor::visit(VariableNode& node) {
     if (info->type == BasicType::STRING) {
         auto it = stringEnv.find(node.name);
         if (it == stringEnv.end()) {
-            std::cerr << "ERRORE: string '" << node.name << "' non initilized\n";
+            std::cerr << "ERROR: string '" << node.name << "' not initialized\n";
         } else {
             lastValue = it->second;
         }
