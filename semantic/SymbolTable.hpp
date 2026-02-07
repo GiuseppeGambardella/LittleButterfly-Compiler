@@ -6,7 +6,7 @@
 #include <vector>
 #include "helper/helper.h"
 
-// info associeted to a symbol
+// info associated to a symbol
 struct SymbolInfo {
     BasicType type;
     bool isFunction;
