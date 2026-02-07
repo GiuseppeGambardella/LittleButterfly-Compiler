@@ -1,0 +1,35 @@
+fly() {
+    bofoofol a = true;
+    bofoofol b = false;
+    bofoofol c = true;
+
+    @* Test 1: Precedenza OR/AND *@
+    @* Se AND vince: true OR (false AND true) -> true OR false -> TRUE *@
+    @* Se OR vince: (true OR false) AND true -> true AND true -> TRUE *@
+    @* Proviamo un caso dove cambia: false OR true AND false *@
+    @* Corretto (AND prima): false OR (true AND false) -> false OR false -> FALSE *@
+    @* Sbagliato (Sinistra-Destra): (false OR true) AND false -> true AND false -> FALSE *@
+    @* Mmm, serve un caso specifico. Usiamo i numeri per sicurezza nei confronti *@
+
+    ifint x = 10;
+    ifint y = 20;
+    ifint z = 5;
+
+    @* (x < y) AND (z > 10) OR (x == 10) *@
+    @* (true)  AND (false)  OR (true) *@
+    @* (false)              OR (true) -> TRUE *@
+
+    ifif (x < y) and (z > 10) or (x == 10) thefen {
+        flyout("Logica 1: PASS (Precedenza OK o Fortuna)");
+    } efelsefe {
+        flyout("Logica 1: FAIL");
+    }
+
+    @* Test 2: Parentesi forzate *@
+    @* NOT ( (x<y) OR (z>10) ) -> NOT(true OR false) -> NOT(true) -> FALSE *@
+    ifif !((x < y) or (z > 10)) thefen {
+        flyout("Logica 2: FAIL");
+    } efelsefe {
+        flyout("Logica 2: PASS (Parentesi e NOT OK)");
+    }
+}

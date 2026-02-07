@@ -1,0 +1,3 @@
+fly() {
+    10 = 20; @* Errore di sintassi o semantico: operando sinistro non valido *@
+}

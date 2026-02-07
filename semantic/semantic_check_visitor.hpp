@@ -162,9 +162,14 @@ public:
                 return;
             }
             if (node.op != "==" && node.op != "<>") {
-                if (!((leftT == BasicType::INT || leftT == BasicType::DOUBLE) &&
-                      (rightT == BasicType::INT || rightT == BasicType::DOUBLE))) {
-                    error("Relational operator '" + node.op + "' requires numeric operands.", node.line);
+                // Check aggiornato: Accetta (Numerici) OPPURE (Stringhe)
+                bool isNumeric = (leftT == BasicType::INT || leftT == BasicType::DOUBLE) &&
+                                 (rightT == BasicType::INT || rightT == BasicType::DOUBLE);
+                bool isString  = leftT == BasicType::STRING && rightT == BasicType::STRING;
+                bool isChar    = leftT == BasicType::CHAR && rightT == BasicType::CHAR;
+
+                if (!isNumeric && !isString && !isChar) {
+                    error("Relational operator '" + node.op + "' requires both numeric operands, both chars or both strings.", node.line);
                     currentType = BasicType::ERROR;
                     return;
                 }

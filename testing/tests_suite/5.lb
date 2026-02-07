@@ -1,0 +1,27 @@
+defef math_pow(ifint base, ifint exp) : ifint {
+    ifint p_res = 1;
+    ifint p_i = 0;
+    whifilefe p_i < exp thefen {
+        p_res = p_res * base;
+        p_i = p_i + 1;
+    }
+    flyback p_res;
+}
+
+defef math_fact_iter(ifint f_n) : ifint {
+    ifint f_res = 1;
+    ifint f_k = 1;
+    whifilefe f_k <= f_n thefen {
+        f_res = f_res * f_k;
+        f_k = f_k + 1;
+    }
+    flyback f_res;
+}
+
+fly() {
+    flyout("Potenza iterativa (2^10):");
+    flyout(math_pow(2, 10));
+
+    flyout("Fattoriale iterativo (5!):");
+    flyout(math_fact_iter(5));
+}

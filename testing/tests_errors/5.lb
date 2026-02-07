@@ -1,0 +1,7 @@
+defef somma(ifint a, ifint b) : ifint {
+    flyback a + b;
+}
+
+fly() {
+    somma(10); @* Errore: mancano argomenti *@
+}

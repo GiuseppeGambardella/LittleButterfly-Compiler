@@ -1,72 +1,193 @@
+<div align="center">
+
 # 🦋 LittleButterfly Compiler
 
-A compiler for a custom, C-like language, built for the **Programming Language Engineering** university course.
+**Un compilatore sperimentale basato su LLVM e MLIR**
+
+![C++](https://img.shields.io/badge/Standard-C%2B%2B20-blue?logo=c%2B%2B)
+![Build](https://img.shields.io/badge/Build-CMake-orange?logo=cmake)
+![LLVM](https://img.shields.io/badge/Backend-LLVM%20%2F%20MLIR-green?logo=llvm)
+![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
+
+</div>
 
 ---
 
-## 🚀 About the Project
+**LittleButterfly** è un linguaggio di programmazione custom che dimostra l'implementazione di una pipeline di compilazione moderna. Utilizza **Flex** e **Bison** per il frontend e sfrutta la potenza di **MLIR** (Multi-Level Intermediate Representation) per generare codice macchina ottimizzato tramite **LLVM**.
 
-The **LittleButterfly Compiler** is a university project that demonstrates the principles of compiler construction. It implements a compiler for a custom-invented, C-like language.
+## 📑 Indice
 
-The language follows the general syntax, structure, and semantics of C. However, it introduces a unique linguistic twist: a transformation rule applied **exclusively to C keywords and standard library function names.**
+- [⚡ Caratteristiche del Linguaggio](#-caratteristiche-del-linguaggio)
+- [📂 Struttura del Progetto](#-struttura-del-progetto)
+- [🛠 Prerequisiti e Dipendenze](#-prerequisiti-e-dipendenze)
+- [🏗 Build e Installazione](#-build-e-installazione)
+- [🚀 Esecuzione](#-esecuzione)
+- [📝 Esempi di Codice](#-esempi-di-codice)
 
-## 🔎 The "Butterfly" Language Rule
+---
 
-The core feature of the LittleButterfly language is a "vowel expansion" transformation. Every vowel (`a`, `e`, `i`, `o`, `u`) found in a C keyword or standard library function is expanded by adding an 'f' and repeating the vowel.
+## ⚡ Caratteristiche del Linguaggio
 
-The formal production rule for this change is:
-`vowel ::= vowelfvowel`
+LittleButterfly utilizza una sintassi unica e verbosa per le sue keyword. Ecco la guida di riferimento rapida:
 
-### The Crucial Distinction
+### 🧱 Tipi di Dato
+| Keyword LittleButterfly | Corrispettivo C++ | Descrizione |
+| :--- | :--- | :--- |
+| `ifint` | `int` | Numero Intero |
+| `refeafal` | `double` | Numero Reale (Float) |
+| `bofoofol` | `bool` | Valore Booleano |
+| `chafar` | `char` | Singolo Carattere |
+| `strifing` | `std::string` | Stringa di testo |
+| `notype` | `void` | Tipo vuoto/nullo |
 
-This transformation **only** applies to the language's built-in vocabulary.
-* **✅ Transformed:** C keywords (`int`, `while`, `if`), standard library functions (`printf`, `main`, `malloc`).
-* **❌ Not Transformed:** User-defined identifiers (variable names, custom function names) and string literals.
-
-This design choice creates a parsing challenge where the lexer and parser must distinguish between the "Butterfly" vocabulary and standard user input.
-
-### Examples of Transformation
-
-| Standard C | LittleButterfly Language |
+### 🎛 Controllo di Flusso
+| Struttura | Sintassi |
 | :--- | :--- |
-| `int` | **`ifint`** |
-| `char` | **`chafar`** |
-| `while` | **`whifilefe`** |
-| `if` | **`ifif`** |
-| `return` | **`refetufurn`** |
-| `main` | **`mafaifin`** |
-| `printf` | **`prifintf`** |
+| **Condizione** | `ifif (cond) thefen { ... } efelsefe { ... }` |
+| **Ciclo** | `whifilefe (cond) thefen { ... }` |
+| **Funzione** | `defef nome(params) : tipo { ... }` |
+| **Ritorno** | `flyback;` |
+| **Main** | `fly() { ... }` |
+
+### 📺 Input / Output
+* **Stampa:** `flyout(valore)`
+* **Input:** `flyin(variabile)`
 
 ---
 
-## 💻 Code Comparison
+## 📂 Struttura del Progetto
 
-Here is a simple program in standard C, followed by its equivalent in the LittleButterfly language.
-
-### Standard C
-```c
-int main() {
-    int counter = 10;
-    while (counter > 0) {
-        printf("Count: %d\n", counter);
-        counter--;
-    }
-    return 0;
-}
+```text
+LittleButterfly-Compiler/
+├── 📁 ast/             # Definizioni dei nodi dell'Abstract Syntax Tree
+├── 📁 lexer/           # Analizzatore lessicale (Flex: lexer.l)
+├── 📁 parser/          # Analizzatore sintattico (Bison: parser.y)
+├── 📁 semantic/        # Symbol Table e Type Checking
+├── 📁 mlir/            # Generazione MLIR e Lowering verso LLVM IR
+├── 📁 runtime/         # Libreria C++ di supporto a runtime
+├── 📁 testing/         # Suite di test automatizzati e file .lb
+├── 📄 CMakeLists.txt   # Configurazione di build principale
+└── 📄 main.cpp         # Entry point del compilatore
 ```
 
-### LittleButterfly
-```c
-// Note how user-defined names 'counter' and the string literal are unchanged.
+---
 
-ifint mafaifin() {
-    ifint counter = 10; // 'ifint' is transformed, 'counter' is not
+## 🛠 Prerequisiti e Dipendenze
 
-    whifilefe (counter > 0) { // 'whifilefe' is transformed
-        prifintf("Count: %d\n", counter); // 'prifintf' is transformed, string is not
-        counter--;
+Per compilare il progetto è necessario un ambiente di sviluppo C++ moderno.
+
+### Requisiti Base
+* **Compilatore C++**: Compatibile con **C++20**.
+* **CMake**: Versione **3.14+**.
+* **LLVM & MLIR**: Installazione completa con librerie di sviluppo.
+
+### Installazione Flex & Bison
+
+Il progetto richiede Flex e Bison per generare il parser e il lexer. Ecco come installarli sulla tua piattaforma:
+
+#### 🐧 Linux (Ubuntu/Debian)
+```bash
+sudo apt-get update
+sudo apt-get install flex bison
+```
+
+#### 🍎 macOS
+Si consiglia l'uso di Homebrew:
+```bash
+brew install flex bison
+```
+*Nota: CMake cercherà automaticamente in `/opt/homebrew/opt/bison/bin`.*
+
+#### 🪟 Windows
+1.  **Via WSL2 (Consigliato):** Installa Ubuntu su WSL e segui le istruzioni Linux. È il metodo più stabile per LLVM.
+2.  **Nativo:** Installa **WinFlexBison** tramite Chocolatey:
+    ```powershell
+    choco install winflexbison3
+    ```
+
+---
+
+## 🏗 Build e Installazione
+
+Segui questi passaggi per compilare il progetto da zero:
+
+1.  **Clona il repository**
+    ```bash
+    git clone [https://github.com/giuseppegambardella/LittleButterfly-Compiler.git](https://github.com/giuseppegambardella/LittleButterfly-Compiler.git)
+    cd LittleButterfly-Compiler
+    ```
+
+2.  **Crea la directory di build**
+    ```bash
+    mkdir build && cd build
+    ```
+
+3.  **Configura con CMake**
+
+    *Opzione A: Installazione Standard (Linux/macOS)*
+    ```bash
+    cmake ..
+    ```
+
+    *Opzione B: Percorso Custom (Consigliato per Windows/Dev)*
+    Se hai compilato LLVM da sorgente o l'hai installato in una cartella specifica, usa `CMAKE_PREFIX_PATH` per indicare la cartella di build/installazione di LLVM:
+    ```bash
+    cmake -DCMAKE_PREFIX_PATH="C:/.../llvm-project/build" ..
+    ```
+    *(Sostituisci il percorso con quello della tua installazione)*
+
+4.  **Compila**
+    ```bash
+    make
+    # Oppure su Windows: cmake --build . --config Release
+    ```
+---
+
+## 🚀 Esecuzione
+
+### Compilazione di un sorgente
+Una volta compilato, l'eseguibile `LittleButterfly_Compiler` si troverà nella cartella `build`.
+
+```bash
+./LittleButterfly_Compiler ../testing/tests_suite/1.lb
+```
+
+### Esecuzione della Test Suite
+Il progetto include un `TestRunner` integrato per verificare le funzionalità:
+
+```bash
+./TestRunner
+```
+
+---
+
+## 📝 Esempi di Codice
+
+Ecco un esempio completo di un programma `.lb` che calcola una somma semplice con logica condizionale:
+
+```c++
+@* Esempio: Calcolo Semplice *@
+
+fly() {
+    ifint a = 10;
+    ifint b = 20;
+    
+    @* Controllo condizionale *@
+    ifif a < b thefen {
+        flyout("A è minore di B");
+    } efelsefe {
+        flyout("A è maggiore o uguale a B");
     }
     
-    refetufurn 0; // 'refetufurn' is transformed
+    ifint somma = a + b;
+    
+    @* Output del risultato *@
+    flyout(somma);
+    
+    flyback;
 }
 ```
+
+<div align="center">
+  <sub>LittleButterfly Compiler Project</sub>
+</div>
