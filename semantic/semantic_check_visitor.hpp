@@ -16,9 +16,7 @@ class SemanticCheckVisitor : public ASTVisitor {
     std::vector<std::string> errors;
     bool hasError = false;
     BasicType expectedReturnType = BasicType::VOID;
-
-    // --- NUOVO: Traccia la funzione corrente ---
-    std::string currentFunctionName;
+    std::string currentFunctionName; // used to track the current function for recursion checks
 
 public:
     SemanticCheckVisitor(SymbolTable &symbols, const std::vector<std::string>& src)
@@ -26,9 +24,7 @@ public:
 
     [[nodiscard]] const auto &getErrors() const { return errors; }
 
-    // --- 1. VISITA DICHIARAZIONE FUNZIONE ---
     void visit(FunctionDeclNode &node) override {
-        // Entriamo nella funzione: salviamo il nome
         std::string previousFunction = currentFunctionName;
         currentFunctionName = node.name;
 
@@ -39,13 +35,12 @@ public:
             node.body->accept(*this);
         }
 
-        // Usciamo dalla funzione: ripristiniamo il nome precedente
+
         currentFunctionName = previousFunction;
     }
 
-    // --- 2. VISITA CHIAMATA FUNZIONE (CHECK RICORSIONE) ---
     void visit(FunctionCallNode &node) override {
-        // CHECK RICORSIONE DIRETTA
+        // check for recursion
         if (!currentFunctionName.empty() && node.functionName == currentFunctionName) {
             error("Recursion is not supported: function '" + node.functionName + "' cannot call itself.", node.line);
             currentType = BasicType::ERROR;
@@ -81,7 +76,6 @@ public:
         currentType = info->type;
     }
 
-    // ... (Il resto dei metodi rimane UGUALE al codice precedente) ...
 
     void visit(RealNode &node) override { currentType = BasicType::DOUBLE; }
     void visit(NumberNode &node) override { currentType = BasicType::INT; }
