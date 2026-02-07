@@ -310,7 +310,7 @@ void MLIRGenVisitor::visit(FunctionDeclNode& node) {
     }
 
 
-    // Funnction body generation
+    // Function body generation
     if (node.body) node.body->accept(*this);
 
 
