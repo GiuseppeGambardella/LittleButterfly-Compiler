@@ -17,6 +17,10 @@
 #include <map>
 #include <string>
 
+
+/// MLIR Generation Visitor
+/// class that traverses the AST and generates MLIR code
+
 class MLIRGenVisitor : public ASTVisitor {
 public:
     mlir::MLIRContext& context;

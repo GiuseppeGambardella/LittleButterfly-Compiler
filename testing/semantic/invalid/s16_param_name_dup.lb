@@ -1,0 +1,3 @@
+defef ifint f(ifint x, ifint x) : ifint {
+    flyback x;
+}

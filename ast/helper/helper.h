@@ -1,15 +1,10 @@
-//
-// Created by Giuseppe Gambardella on 01/12/25.
-//
-
-#ifndef LITTLEBUTTERFLY_COMPILER_HELPER_H
-#define LITTLEBUTTERFLY_COMPILER_HELPER_H
+#pragma once
 #include <string>
 #include "../nodes/expression/TypeNode.hpp"
 
 
 inline std::string typeToString(BasicType type) {
-    // funzione helper per convertire l'enum BasicType in una stringa
+    // helper function to convert BasicType to string
     switch (type) {
         case BasicType::INT:    return "Integer"; // Adatta i nomi ai casi
         case BasicType::DOUBLE:  return "Double";
@@ -21,5 +16,3 @@ inline std::string typeToString(BasicType type) {
         default:                return "Unknown";
     }
 }
-
-#endif //LITTLEBUTTERFLY_COMPILER_HELPER_H

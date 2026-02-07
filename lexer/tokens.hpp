@@ -1,9 +1,10 @@
 #ifndef TOKENS_H
 #define TOKENS_H
 
-// Usiamo numeri positivi (0 è riservato per EOF - fine file)
+// Using positive numbers (0 is reserved for EOF - end of file)
+// >256 to avoid conflicts with ASCII values for single-character tokens.
 enum TokenType {
-    //Token numerici/operzioni
+    // TOKEN CONSTANTS
     TOKEN_CONST_INTEGER=258,
     TOKEN_CONST_STRING=284,
     TOKEN_CONST_CHAR=285,
@@ -14,7 +15,7 @@ enum TokenType {
     TOKEN_AND=262,
     TOKEN_OR=263,
 
-    //Token parole chiave
+    //KEYWORDS TOKEN
     TOKEN_IF=264,
     TOKEN_THEN=265,
     TOKEN_ELSE=266,
@@ -28,19 +29,19 @@ enum TokenType {
     TOKEN_STRING=278,
 
 
-    //operatori relazionali
+    //RELATIONAL OPERATORS
     TOKEN_EQ=280,
     TOKEN_NEQ=281,
     TOKEN_LE=282,
     TOKEN_GE=283,
 
-    //funzioni
+    //FUNCTION
     TOKEN_FUNC=279,
     TOKEN_PRINT=270,
     TOKEN_SCAN=271,
     TOKEN_RETURN=272,
 
-    //Token speciali
+    //SPECIAL TOKENS
     TOKEN_EOF=273,
     TOKEN_SCONOSCIUTO=287
 

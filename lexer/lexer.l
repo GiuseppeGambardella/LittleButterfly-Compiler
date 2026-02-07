@@ -1,12 +1,13 @@
 %{
 #include <iostream>
 #include <string>
-#include "Scanner.hpp" // Includiamo la nostra classe
+#include "Scanner.hpp"
 
 using namespace std;
 using namespace yy;
 
-// Variabile per la location
+// location_type to track line and column numbers
+// used for error reporting
 yyParser::location_type loc;
 
 #undef YY_DECL
@@ -41,7 +42,7 @@ yyParser::location_type loc;
 
 %}
 
-/* MANTENIAMO C++ */
+/* C++ */
 %option c++
 %option noyywrap
 %option yylineno
@@ -90,7 +91,7 @@ yyParser::location_type loc;
 
 [a-zA-Z_][a-zA-Z0-9_]* { return yyParser::make_ID(std::string(yytext), loc); }
 
-"@*"([^*]|\*+[^*@])*\*+"@" { /* Commenti */ }
+"@*"([^*]|\*+[^*@])*\*+"@" { /* Comments */ }
 
 \n+         { loc.lines(yyleng); loc.step(); }
 [ \t\r]+    { loc.step(); }

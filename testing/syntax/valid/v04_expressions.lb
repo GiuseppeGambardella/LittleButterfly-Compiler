@@ -1,0 +1,5 @@
+fly() {
+    ifint x = 1 + 2 * 3;
+    bofoofol b = (x > 3) and true or false;
+    strifing s = "a" & "b" & "c";
+}

@@ -19,28 +19,28 @@
     #include <vector>
     #include <memory>
 
-    // Includiamo TypeNode per passarlo per valore
+    // including TypeNode definition
     #include "ast/nodes/expression/TypeNode.hpp"
 
-    // Forward declaration del nostro Scanner custom
+    // Forward declaration of our Scanner custom
     namespace yy { class Scanner; }
     class ASTNode;
 }
 
 
-// Passiamo il nostro Scanner come riferimento al parser
+// Using our custom scanner in the parser
 %param { yy::Scanner& scanner }
 %parse-param { std::unique_ptr<ASTNode>& astRoot }
 %parse-param { const std::vector<std::string>& sourceLines }
 
 %code {
-    #include "Scanner.hpp" // Include la definizione completa della classe Scanner
+    #include "Scanner.hpp"
     #include "ast/nodes_impl.hpp"
     #include "ast/ast_factory.hpp"
 
     #include <iomanip>
 
-    // Funzione bridge che Bison chiama: prende il nostro scanner e chiama lex()
+    // bridge to call our scanner used by Bison
     static yy::yyParser::symbol_type yylex(yy::Scanner& scanner) {
         return scanner.lex();
     }
@@ -51,20 +51,20 @@
 %token EOF 0
 %token SCONOSCIUTO
 
-/* --- TOKEN CON TIPO --- */
+/* --- TYPE TOKEN --- */
 %token <int> CONST_INTEGER
 %token <double> CONST_DOUBLE
 %token <char> CONST_CHAR
 %token <std::string> CONST_STRING ID
 
-/* --- KEYWORDS E OPERATORI --- */
+/* --- KEYWORDS AND OPERATORS --- */
 %token INT DOUBLE CHAR STRING VOID BOOL
 %token TRUE FALSE
 %token IF THEN ELSE LOOP MAIN
 %token FUNC PRINT SCAN RETURN
 %token EQ NEQ LE GE AND OR
 
-/* Priorità */
+/* Priority */
 %left OR
 %left AND
 %left EQ NEQ '<' '>' LE GE
@@ -73,16 +73,14 @@
 %left '*' '/'
 %right '!'
 
-/* --- TIPI NON TERMINALI --- */
-// Liste (Vettori)
+/* --- NON TERMINAL TYPES --- */
 %type <std::vector<std::unique_ptr<ASTNode>>> global_declarations instructions params arguments
 
-// Nodi singoli (Puntatori)
+// Pointers
 %type <std::unique_ptr<ASTNode>> program function_declaration instruction
 %type <std::unique_ptr<ASTNode>> variable_declaration assignment_command print_command scan_command
 %type <std::unique_ptr<ASTNode>> function_call if_command loop_command expression
 
-// Tipo Oggetto (TypeNode per valore)
 %type <TypeNode> type
 
 %%
@@ -119,7 +117,7 @@ instructions:
       }
     ;
 
-/* --- FUNZIONI --- */
+/* --- FUNCTIONS --- */
 function_declaration:
     FUNC ID '(' params ')' ':' type '{' instructions '}' {
         auto body = make_node<BlockNode>(std::move($9));
@@ -177,7 +175,7 @@ arguments:
       }
     ;
 
-/* --- ISTRUZIONI --- */
+/* --- INSTRUCTIONS --- */
 instruction:
       variable_declaration ';' { $$ = std::move($1); }
     | assignment_command ';'   { $$ = std::move($1); }
@@ -308,27 +306,24 @@ expression:
 
 %%
 
-/* --- AGGIUNTA 3: Funzione Error Migliorata --- */
+/* --- IMPROVED ERROR --- */
 void yy::yyParser::error(const location_type& loc, const std::string& msg) {
-    // Intestazione errore
     cerr << "\n>> SYNTAX ERROR at line " << loc.begin.line
          << ", column " << loc.begin.column << ": " << msg << endl;
 
-    // Recupera la riga del codice sorgente (se disponibile)
-    // loc.begin.line parte da 1, il vettore da 0
+    // Retrieve the source line
+    // loc.begin.line starts by 1, vector starts by 0
     int lineIndex = loc.begin.line - 1;
 
     if (lineIndex >= 0 && lineIndex < (int)sourceLines.size()) {
         const std::string& line = sourceLines[lineIndex];
 
-        // Stampa il numero di riga e il codice
         cerr << "    " << std::setw(4) << loc.begin.line << " | " << line << endl;
 
-        // Stampa il puntatore '^' sotto l'errore
+        // print location marker under the line
         cerr << "         | ";
 
-        // Stampa spazi fino alla colonna dell'errore
-        // Nota: loc.begin.column parte da 1
+        // Note: loc.begin.column starts by 1
         for(int i = 1; i < loc.begin.column; ++i) {
             cerr << " ";
         }

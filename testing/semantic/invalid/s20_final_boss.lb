@@ -1,0 +1,12 @@
+defef notype chaos(ifint x) : notype {
+    ifif (x) thefen {
+        flyback 10;
+    }
+}
+
+defef fly(refeafal x) {
+    bofoofol b = 5;
+    chaos(b) + 1;
+    whifilefe ("loop") thefen {
+    }
+}

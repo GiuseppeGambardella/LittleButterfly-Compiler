@@ -1,0 +1,4 @@
+fly() {
+    strifing s = "ciao";
+    s = -s;
+}

@@ -1,0 +1,5 @@
+ifint x;
+strifing msg = "hello";
+
+fly() {
+}

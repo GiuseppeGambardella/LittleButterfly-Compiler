@@ -1,0 +1,6 @@
+defef notype g() : notype {
+}
+
+fly() {
+    strifing s = "a" & g();
+}
