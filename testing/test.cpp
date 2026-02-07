@@ -7,8 +7,9 @@
 namespace fs = std::filesystem;
 
 // --- CONFIGURAZIONE PERCORSI ---
-const std::string POSITIVE_DIR = "../testing/tests_suite";
-const std::string NEGATIVE_DIR = "../testing/tests_errors";
+const std::string POSITIVE_DIR = "../testing/syntax/valid";
+const std::string NEGATIVE_DIR_1 = "../testing/syntax/invalid";
+const std::string NEGATIVE_DIR_2 = "../testing/semantic/invalid";
 
 #ifdef _WIN32
 const std::string COMPILER_EXE = "LittleButterfly_Compiler.exe";
@@ -83,7 +84,9 @@ int main() {
     run_category(POSITIVE_DIR, true, passed, total);
 
     // 2. Esegui i test negativi (Codice errato)
-    run_category(NEGATIVE_DIR, false, passed, total);
+    run_category(NEGATIVE_DIR_1, false, passed, total);
+
+    run_category(NEGATIVE_DIR_2, false, passed, total);
 
     std::cout << "-------------------------------------------" << std::endl;
     std::cout << "RIEPILOGO: " << passed << "/" << total << " test superati." << std::endl;

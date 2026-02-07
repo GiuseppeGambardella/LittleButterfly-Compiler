@@ -1,0 +1,6 @@
+defef notype f() : notype {
+    flyback 5;
+}
+
+fly() {
+}

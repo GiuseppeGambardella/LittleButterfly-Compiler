@@ -1,4 +1,0 @@
-fly() {
-    ifint a = 10  @* Manca il punto e virgola *@
-    flyout(a);
-}

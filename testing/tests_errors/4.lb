@@ -1,4 +1,0 @@
-fly() {
-    ifint a = 10;
-    ifint a = 20; @* Errore: a esiste gia' *@
-}

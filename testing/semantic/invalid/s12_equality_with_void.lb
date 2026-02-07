@@ -1,0 +1,7 @@
+defef notype g() : notype {
+}
+
+fly() {
+    ifif (g() == g()) thefen {
+    }
+}

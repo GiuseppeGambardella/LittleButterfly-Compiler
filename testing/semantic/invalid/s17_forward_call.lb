@@ -1,0 +1,6 @@
+fly() {
+    foo();
+}
+
+defef notype foo() : notype {
+}

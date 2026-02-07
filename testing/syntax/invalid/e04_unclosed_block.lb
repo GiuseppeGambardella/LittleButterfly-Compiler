@@ -1,0 +1,4 @@
+fly() {
+    ifif (true) thefen {
+        flyout("ok");
+}

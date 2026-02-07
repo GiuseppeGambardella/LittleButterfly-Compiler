@@ -1,0 +1,5 @@
+defef ifint f(ifint x) : ifint {
+    ifif (x > 0) thefen {
+        flyback x;
+    }
+}

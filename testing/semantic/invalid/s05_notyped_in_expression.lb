@@ -1,0 +1,6 @@
+defef notype log() : notype {
+}
+
+fly() {
+    ifint x = 1 + log();
+}

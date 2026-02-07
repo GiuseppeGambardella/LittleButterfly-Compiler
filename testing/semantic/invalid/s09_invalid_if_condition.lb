@@ -1,0 +1,5 @@
+fly() {
+    ifint x = 10;
+    ifif (x) thefen {
+    }
+}

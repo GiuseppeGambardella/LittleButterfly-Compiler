@@ -1,4 +1,0 @@
-fly() {
-    ifint a = 5;
-    flyout(z); @* Errore: z non esiste *@
-}

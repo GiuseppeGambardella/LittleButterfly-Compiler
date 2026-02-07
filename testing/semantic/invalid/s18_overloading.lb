@@ -1,0 +1,10 @@
+defef ifint f(ifint x) : ifint {
+    flyback x;
+}
+
+defef refeafal f(refeafal x) : refeafal {
+    flyback x;
+}
+
+fly() {
+}

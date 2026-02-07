@@ -1,7 +1,0 @@
-@* Test base: variabili e calcoli *@
-fly() {
-    ifint a = 10;
-    ifint b = 20;
-    ifint c = a + b * 2;
-    flyout(c);
-}

@@ -1,0 +1,11 @@
+fly() {
+    ifif (true) thefen {
+        flyout("ok");
+    } efelsefe {
+        flyout("no");
+    }
+
+    whifilefe (false) thefen {
+        flyout("loop");
+    }
+}
