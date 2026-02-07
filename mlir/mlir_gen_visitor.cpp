@@ -475,7 +475,7 @@ void MLIRGenVisitor::visit(IfNode& node) {
 
 void MLIRGenVisitor::visit(LoopNode& node) {
 
-    // Retrieve courrent block and region
+    // Retrieve current block and region
     mlir::Block* currentBlock = builder.getBlock();
     mlir::Region* region = currentBlock->getParent();
 
