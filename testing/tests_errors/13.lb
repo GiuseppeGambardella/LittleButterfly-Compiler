@@ -1,0 +1,9 @@
+defef sum(ifint a, ifint b): ifint {
+    flyback a + b;
+}
+
+fly() {
+    ifint sum = 10;
+    sum(1, 2);
+}
+@* ERROR: identificatore sum usato sia come variabile che come funzione*@

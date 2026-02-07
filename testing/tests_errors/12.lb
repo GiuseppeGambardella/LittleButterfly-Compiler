@@ -1,0 +1,17 @@
+defef foo(strifing x): ifint {
+    flyback x;
+}
+
+fly(ifint a) {
+    bofoofol b = 10;
+    foo(1, 2);
+    ifif (5) thefen {
+    }
+}
+@* ERROR:
+// - fly con parametri
+// - return con tipo errato
+// - assegnamento bool ← int
+// - numero argomenti errato
+// - condizione if non booleana
+*@

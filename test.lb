@@ -16,7 +16,7 @@ defef mostra_menu() : notype {
 }
 
 @* Funzione 2: Esegue il calcolo aritmetico *@
-defef calcola(ifint op, refeafal x, refeafal y) : refeafal {
+defef cocacola(ifint op, refeafal x, refeafal y) : refeafal {
     refeafal ris = 0.0;
 
     @* Selezione operazione tramite ifif/efelsefe *@
@@ -77,7 +77,7 @@ fly() {
                 flyin(n2);
 
                 @* Chiamata alla funzione di calcolo *@
-                refeafal risultato = calcola(scelta, n1, n2);
+                refeafal risultato = cocacola(scelta, n1, n2);
 
                 @* Stampa del risultato *@
                 strifing msg = "Risultato: ";

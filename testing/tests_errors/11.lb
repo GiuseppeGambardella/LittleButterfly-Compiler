@@ -1,0 +1,5 @@
+defef fly() {
+    strifing s = "ciao";
+    s = -s;
+}
+@* ERROR: operatore opposto su tipo non numerico*@
