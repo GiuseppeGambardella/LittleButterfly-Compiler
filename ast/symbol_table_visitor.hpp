@@ -10,13 +10,12 @@
 
 class SymbolTableVisitor final : public ASTVisitor {
     SymbolTable &symTable;
-    const std::vector<std::string>& sourceLines; // Riferimento al codice sorgente
+    const std::vector<std::string>& sourceLines; // source code lines for error reporting
     BasicType currentType = BasicType::VOID;
     std::vector<std::string> errors;
     bool hasError = false;
 
 public:
-    // Costruttore aggiornato: prende anche sourceLines
     SymbolTableVisitor(SymbolTable &symbols, const std::vector<std::string>& src);
 
     const auto& getErrors() const { return errors; }
@@ -43,7 +42,7 @@ public:
     void visit(UnaryOpNode &node) override;
     void visit(BinaryOpNode &node) override;
 
-    // Nodi foglia o non rilevanti per lo scope
+    // leaf nodes visitors
     void visit(NumberNode &) override;
     void visit(RealNode &) override;
     void visit(StringNode &) override;

@@ -1,0 +1,5 @@
+fly() {
+    ifint a = 10;
+    ifbool b = true;
+    ifint c = a + b; @* Errore: somma tra int e bool non permessa *@
+}

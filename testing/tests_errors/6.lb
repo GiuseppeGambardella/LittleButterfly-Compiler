@@ -1,0 +1,6 @@
+fly() {
+    ifint x = 10;
+    ifif x thefen {  @* Errore: x e' un intero, non un booleano *@
+        flyout("Non dovrebbe compilare");
+    }
+}

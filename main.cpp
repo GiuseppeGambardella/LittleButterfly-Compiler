@@ -25,15 +25,13 @@
 using namespace std;
 
 int main(int argc, char** argv) {
-    // 1. GESTIONE INPUT (File o Stdin)
+    // 1. input handling
     ifstream file;
-    istream* input = &cin; // Di default leggiamo da tastiera
+    istream* input = &cin;
 
-    // Vettore per salvare le righe del codice (per i messaggi di errore)
     std::vector<std::string> sourceLines;
 
     if (argc > 1) {
-        // Se c'è un argomento, proviamo ad aprire il file
         file.open(argv[1]);
         if (!file.is_open()) {
             cerr << "CRITICAL ERROR: Unable to open file. '" << argv[1] << "'" << endl;
@@ -42,20 +40,16 @@ int main(int argc, char** argv) {
         input = &file;
     }
 
-    // 2. CREAZIONE DELLO SCANNER
-    // Istanziamo la classe yy::Scanner che abbiamo definito in Scanner.hpp.
-    // Le passiamo il puntatore allo stream di input (file o cin).
+    // 2. scanner creation
     yy::Scanner scanner(input);
     std::unique_ptr<ASTNode> astRoot;
 
-    // 3. CREAZIONE DEL PARSER
-    // Il parser prende il nostro scanner come riferimento (vedi %param nel parser.y)
+    // 3. parser creation
     yy::yyParser parser(scanner, astRoot,sourceLines);
 
     cout << "--- START... ---" << endl;
 
-    // 4. AVVIO DEL PARSING
-    // parse() restituisce 0 se tutto va bene, 1 se ci sono errori
+    // 4. Starting parsing
     try {
         int result = parser.parse();
 
@@ -76,9 +70,8 @@ int main(int argc, char** argv) {
             SemanticCheckVisitor typeChecker(symTable, sourceLines);
             astRoot->accept(typeChecker);
 
-            // --- CORREZIONE QUI ---
+
             if (!typeChecker.getErrors().empty()) {
-                // Dobbiamo STAMPARE gli errori prima di uscire!
                 for (const auto& err : typeChecker.getErrors()) {
                     std::cerr << err;
                 }
@@ -91,7 +84,6 @@ int main(int argc, char** argv) {
             // =======================
             mlir::MLIRContext context;
 
-            // (opzionale ma consigliato)
             context.getOrLoadDialect<mlir::func::FuncDialect>();
             context.getOrLoadDialect<mlir::arith::ArithDialect>();
             context.getOrLoadDialect<mlir::memref::MemRefDialect>();
@@ -105,7 +97,7 @@ int main(int argc, char** argv) {
 
             mlir::ModuleOp module = mlirGen.theModule;
 
-            /*// Dump MLIR su stdout
+            /*// Dump MLIR stdout
             std::cout << "\n===== MLIR DUMP =====\n";
             mlirGen.dump();
             std::cout << "\n=====================\n";*/

@@ -1,0 +1,13 @@
+@* Test return complessi *@
+defef check(ifint n) : ifint {
+    ifif n > 10 thefen {
+        flyback 1;
+    } efelsefe {
+        flyback 0;
+    }
+    @* Nessun return qui: il compilatore deve gestirlo *@
+}
+
+fly() {
+    flyout(check(20));
+}

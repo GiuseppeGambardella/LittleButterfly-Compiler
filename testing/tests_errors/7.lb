@@ -1,0 +1,7 @@
+defef numero() : ifint {
+    flyback "Sono una stringa"; @* Errore: atteso int, trovato string *@
+}
+
+fly() {
+    numero();
+}
