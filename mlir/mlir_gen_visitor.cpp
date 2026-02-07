@@ -451,7 +451,7 @@ void MLIRGenVisitor::visit(IfNode& node) {
         builder.create<mlir::cf::CondBranchOp>(builder.getUnknownLoc(), cond, thenBlock, mergeBlock);
     }
 
-    // 4. Code gen fot THEN branch
+    // 4. Code gen for THEN branch
     builder.setInsertionPointToStart(thenBlock);
     node.thenBranch->accept(*this);
 
