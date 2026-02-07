@@ -63,15 +63,8 @@ void lowering::lowerToLLVMDialect(mlir::ModuleOp module) {
     // ───────────────────────
     pm.addPass(mlir::createCanonicalizerPass());
     pm.addPass(mlir::createCSEPass());
-
-    // (facoltativo ma consigliato)
     pm.addPass(mlir::createLoopInvariantCodeMotionPass());
     pm.addPass(mlir::createSCCPPass());
-
-    // ───────────────────────
-    // SCF → Control Flow
-    // ───────────────────────
-   pm.addPass(mlir::createArithToLLVMConversionPass());
 
     // ───────────────────────
     // ALL → LLVM
