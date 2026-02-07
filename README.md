@@ -7,7 +7,6 @@
 ![C++](https://img.shields.io/badge/Standard-C%2B%2B20-blue?logo=c%2B%2B)
 ![Build](https://img.shields.io/badge/Build-CMake-orange?logo=cmake)
 ![LLVM](https://img.shields.io/badge/Backend-LLVM%20%2F%20MLIR-green?logo=llvm)
-![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
 
 </div>
 
