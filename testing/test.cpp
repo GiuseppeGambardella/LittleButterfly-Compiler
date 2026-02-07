@@ -20,12 +20,12 @@ const std::string COMPILER_EXE = "./LittleButterfly_Compiler";
 // Helper per eseguire una categoria di test
 void run_category(const std::string& dirPath, bool expectSuccess, int& passedCount, int& totalCount) {
     if (!fs::exists(dirPath)) {
-        std::cout << "[SKIP] Cartella non trovata: " << dirPath << std::endl;
+        std::cout << "[SKIP] Folder not found: " << dirPath << std::endl;
         return;
     }
 
-    std::cout << "--- Esecuzione test in: " << fs::path(dirPath).filename().string()
-              << " (Atteso: " << (expectSuccess ? "SUCCESS" : "FAILURE") << ") ---" << std::endl;
+    std::cout << "--- Execution tests in: " << fs::path(dirPath).filename().string()
+              << " (Expected: " << (expectSuccess ? "SUCCESS" : "FAILURE") << ") ---" << std::endl;
 
     for (const auto& entry : fs::directory_iterator(dirPath)) {
         if (entry.path().extension() == ".lb") {
@@ -38,7 +38,7 @@ void run_category(const std::string& dirPath, bool expectSuccess, int& passedCou
             if (padding > 0) std::cout << std::string(padding, ' ');
 
             // Esegui nascondendo l'output
-            std::string cmd = "\"" + COMPILER_EXE + "\" " + fullPath + " > nul 2>&1";
+            std::string cmd = "\"" + COMPILER_EXE + "\" " + fullPath + " > nul 2>&1"; //works on Windows only
             int retCode = std::system(cmd.c_str());
 
             bool isSuccess = (retCode == 0);
@@ -50,15 +50,15 @@ void run_category(const std::string& dirPath, bool expectSuccess, int& passedCou
                     std::cout << " -> [PASS]" << std::endl;
                     passedCount++;
                 } else {
-                    std::cout << " -> [FAIL] (Errore inaspettato)" << std::endl;
+                    std::cout << " -> [FAIL] (Unexpected error)" << std::endl;
                 }
             } else {
                 // TEST NEGATIVI: Devono dare ERRORE (!= 0)
                 if (!isSuccess) {
-                    std::cout << " -> [PASS] (Errore rilevato correttamente)" << std::endl;
+                    std::cout << " -> [PASS] (Error found correctly)" << std::endl;
                     passedCount++;
                 } else {
-                    std::cout << " -> [FAIL] (Ha compilato codice errato!)" << std::endl;
+                    std::cout << " -> [FAIL] (Error found in CORRECT code)" << std::endl;
                 }
             }
         }
@@ -72,7 +72,7 @@ int main() {
     std::cout << "===========================================" << std::endl << std::endl;
 
     if (!fs::exists(COMPILER_EXE)) {
-        std::cerr << "[ERRORE] Compilatore non trovato: " << COMPILER_EXE << std::endl;
+        std::cerr << "[ERROR] Compiler not found: " << COMPILER_EXE << std::endl;
         std::cin.get();
         return 1;
     }
@@ -89,12 +89,12 @@ int main() {
     run_category(NEGATIVE_DIR_2, false, passed, total);
 
     std::cout << "-------------------------------------------" << std::endl;
-    std::cout << "RIEPILOGO: " << passed << "/" << total << " test superati." << std::endl;
+    std::cout << "SUMMARY: " << passed << "/" << total << " test passed." << std::endl;
 
     if (total > 0 && passed == total) {
-        std::cout << "\n[OTTIMO] Il compilatore accetta il giusto e rifiuta lo sbagliato." << std::endl;
+        std::cout << "\n[COMPLETED] Compiler passed all tests." << std::endl;
     } else {
-        std::cout << "\n[ATTENZIONE] Qualcosa non va. Controlla i [FAIL]." << std::endl;
+        std::cout << "\n[WARNING] Please check [FAIL]." << std::endl;
     }
 
     // std::cin.get();
