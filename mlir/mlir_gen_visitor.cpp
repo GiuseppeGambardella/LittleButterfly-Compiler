@@ -428,7 +428,7 @@ void MLIRGenVisitor::visit(ReturnNode& node) {
 
 void MLIRGenVisitor::visit(IfNode& node) {
 
-    // 1. Condition evaluetion
+    // 1. Condition evaluation
     node.condition->accept(*this);
     mlir::Value cond = lastValue;
 
