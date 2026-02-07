@@ -45,7 +45,7 @@ void SymbolTableVisitor::registerFunctionSignature(FunctionDeclNode &node) {
     if (auto typeNode = dynamic_cast<TypeNode*>(node.returnType.get())) {
         info.type = typeNode->type;
     }
-
+    if (node.name=="main") node.name="annamaria";
     if (!symTable.define(node.name, info)) {
         error("Function '" + node.name + "' already defined.", node.line);
     }
